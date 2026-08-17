@@ -20,6 +20,14 @@ document.querySelectorAll('.tab').forEach((btn) => {
   });
 });
 
+// modo segundo plano (Camada 1 da limitação "requer Chrome aberto")
+const openBgSettings = $('openBgSettings');
+if (openBgSettings) {
+  openBgSettings.addEventListener('click', () => {
+    chrome.tabs.create({ url: 'chrome://settings/system' });
+  });
+}
+
 /* ---------------- cofre ---------------- */
 async function refreshVault() {
   const r = await send({ type: 'athena_vault_status' });

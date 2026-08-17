@@ -58,6 +58,15 @@
   .vault-box{background:#11141f;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;margin-bottom:18px}
   .vault-box b{font-size:14px}
   .hint{font-size:11px;color:#5d647c;margin-top:6px}
+  .bg-banner{
+    background:linear-gradient(135deg,rgba(109,93,246,.12),rgba(34,211,238,.08));
+    border:1px solid rgba(109,93,246,.35);border-radius:12px;
+    padding:14px 16px;margin-bottom:18px;font-size:13px;
+  }
+  .bg-banner b{color:#eef1f8}
+  .bg-banner .hint{font-size:12px;color:#aab2c9;margin:6px 0 0}
+  .bg-banner ol{padding-left:18px;margin:4px 0 10px}
+  .bg-banner code{font-family:ui-monospace,Consolas,monospace;color:#22d3ee}
   .empty{color:#5d647c;font-size:13px;padding:12px 2px}
   .switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#aab2c9;cursor:pointer}
   input[type=checkbox]{width:auto}
@@ -70,6 +79,16 @@
 <div class="wrap">
   <h1>🦉 Athena — Agendamentos</h1>
   <p class="sub">Tarefas automáticas com contexto, memória e cofre de credenciais. Requer o Chrome aberto.</p>
+
+  <div class="bg-banner" id="bgBanner">
+    <b>💡 Tarefas só executam com o Chrome aberto.</b>
+    <p class="hint">Ative o <b>modo segundo plano</b> do Chrome para as tarefas rodarem mesmo sem janela visível (o processo continua na bandeja do sistema):</p>
+    <ol class="hint">
+      <li>Abra <code>chrome://settings/system</code></li>
+      <li>Ative <b>“Continuar executando aplicativos em segundo plano quando o Google Chrome for fechado”</b></li>
+    </ol>
+    <button class="btn ghost small" id="openBgSettings" type="button">Abrir configuração</button>
+  </div>
 
   <nav class="tabs">
     <button class="tab active" data-tab="tasks">⏰ Tarefas</button>

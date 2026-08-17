@@ -263,9 +263,13 @@ confere `nextRun <= now` para cada tarefa habilitada — o agendamento é por re
 (`scheduler.js`), não por precisão de alarme.
 
 > ⚠️ **Limitações:** as tarefas só executam com o Chrome aberto (o agendador usa
-> `chrome.alarms`). Se uma tarefa usar `login` com o cofre bloqueado, ela é marcada
-> como *ignorada* até você desbloqueá-lo. Senhas nunca são enviadas à IA nem
-> registradas em logs.
+> `chrome.alarms`). Para rodar **sem janela visível**, ative o **modo segundo plano**
+> do Chrome: `chrome://settings/system` → *"Continuar executando aplicativos em
+> segundo plano quando o Google Chrome for fechado"* — o processo fica na bandeja e
+> as tarefas continuam sendo executadas (há um atalho para essa configuração na
+> tela de **⏰ Agendamentos**). Se uma tarefa usar `login` com o cofre bloqueado,
+> ela é marcada como *ignorada* até você desbloqueá-lo. Senhas nunca são enviadas à
+> IA nem registradas em logs.
 
 ## 🛡️ Segurança e privacidade
 
