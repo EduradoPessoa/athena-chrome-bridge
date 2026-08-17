@@ -1,4 +1,4 @@
-# Teste 003 — Extensão do Chrome (estilo Claude Chrome)
+# Athena Chrome Bridge
 
 Extensão **Manifest V3** + **servidor ponte** que permite a um agente de IA ler e
 controlar o navegador: navegar, extrair texto, buscar elementos, clicar, preencher
