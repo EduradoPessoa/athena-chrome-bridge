@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Athena — Agendamentos</title>
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',system-ui,sans-serif;background:#0b0d14;color:#eef1f8;
+    min-height:100vh;padding:32px 20px 80px;
+    background-image:radial-gradient(700px 320px at 15% -5%,rgba(109,93,246,.16),transparent 70%),
+                     radial-gradient(600px 300px at 90% 10%,rgba(34,211,238,.10),transparent 70%);
+  }
+  .wrap{max-width:960px;margin:0 auto}
+  h1{font-size:24px;margin-bottom:6px}
+  .sub{font-size:13px;color:#8b93ab;margin-bottom:22px}
+  .tabs{display:flex;gap:8px;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:20px}
+  .tab{background:none;border:none;color:#8b93ab;font:600 14px inherit;padding:12px 18px;cursor:pointer;border-bottom:2px solid transparent}
+  .tab.active{color:#eef1f8;border-bottom-color:#6d5df6}
+  .tab-pane{display:none}
+  .tab-pane.active{display:block}
+  .bar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+  .muted{font-size:12px;color:#5d647c}
+  button{font:inherit}
+  .btn{background:linear-gradient(135deg,#6d5df6,#22d3ee);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-weight:700;cursor:pointer}
+  .btn.ghost{background:#151a2b;border:1px solid rgba(255,255,255,.12);color:#eef1f8}
+  .btn.small{padding:6px 12px;font-size:12px;border-radius:8px}
+  .btn.danger{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.35);color:#fca5a5}
+  .list{display:flex;flex-direction:column;gap:10px;margin-bottom:22px}
+  .item{background:#11141f;border:1px solid rgba(255,255,255,.09);border-radius:12px;padding:14px 16px}
+  .item-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .item-title{font-weight:700;font-size:14px}
+  .item-sub{font-size:12px;color:#8b93ab;margin-top:4px}
+  .item-actions{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{font-size:11px;border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:3px 10px;color:#8b93ab}
+  .chip.ok{color:#34d399;border-color:rgba(52,211,153,.35)}
+  .chip.err{color:#fca5a5;border-color:rgba(248,113,113,.35)}
+  .chip.warn{color:#fbbf24;border-color:rgba(251,191,36,.35)}
+  .editor{background:#11141f;border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:20px;margin-bottom:22px}
+  .editor h2{font-size:16px;margin-bottom:16px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+  .grid .full{grid-column:1/-1}
+  label{display:block;font-size:12px;font-weight:600;color:#aab2c9;margin-bottom:5px}
+  input,select,textarea{
+    width:100%;background:#151a2b;border:1px solid rgba(255,255,255,.12);border-radius:9px;
+    color:#eef1f8;padding:9px 11px;font:13px inherit;outline:none;
+  }
+  input:focus,select:focus,textarea:focus{border-color:#6d5df6}
+  textarea{resize:vertical;min-height:60px}
+  .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .step-row{display:grid;grid-template-columns:130px 1fr 1fr auto;gap:8px;margin-bottom:8px;align-items:center}
+  .status{margin-top:14px;font-size:13px;min-height:18px}
+  .status.ok{color:#34d399}.status.err{color:#fca5a5}
+  details{font-size:13px;color:#8b93ab;margin-top:8px}
+  summary{cursor:pointer;font-weight:600}
+  .vault-box{background:#11141f;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:16px;margin-bottom:18px}
+  .vault-box b{font-size:14px}
+  .hint{font-size:11px;color:#5d647c;margin-top:6px}
+  .empty{color:#5d647c;font-size:13px;padding:12px 2px}
+  .switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#aab2c9;cursor:pointer}
+  input[type=checkbox]{width:auto}
+  .weekdays{display:flex;gap:6px}
+  .weekdays label{display:flex;align-items:center;gap:4px;font-size:12px;color:#8b93ab;margin:0}
+  @media (max-width:720px){.grid{grid-template-columns:1fr}.step-row{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🦉 Athena — Agendamentos</h1>
+  <p class="sub">Tarefas automáticas com contexto, memória e cofre de credenciais. Requer o Chrome aberto.</p>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="tasks">⏰ Tarefas</button>
+    <button class="tab" data-tab="creds">🔐 Credenciais</button>
+    <button class="tab" data-tab="memory">🧠 Memória</button>
+  </nav>
+
+  <!-- ============ TAREFAS ============ -->
+  <section id="tab-tasks" class="tab-pane active">
+    <div class="bar">
+      <button class="btn" id="newTask">+ Nova tarefa</button>
+      <span class="muted" id="taskCount"></span>
+    </div>
+    <div class="list" id="taskList"></div>
+    <details>
+      <summary>Histórico (últimas 20 execuções)</summary>
+      <div class="list" id="historyList" style="margin-top:10px"></div>
+    </details>
+  </section>
+
+  <!-- editor de tarefa -->
+  <section id="taskEditor" class="editor" hidden>
+    <h2 id="taskEditorTitle">Nova tarefa</h2>
+    <div class="grid">
+      <div class="full"><label>Nome *</label><input id="tName" placeholder="Ex.: Login e baixar relatório diário"></div>
+      <div><label>Modo</label>
+        <select id="tMode">
+          <option value="script">Script (passos determinísticos)</option>
+          <option value="ai">IA (instrução em linguagem natural)</option>
+        </select>
+      </div>
+      <div><label>Fechar aba após executar</label><label class="switch"><input type="checkbox" id="tCloseTab" checked> sim</label></div>
+      <div class="full" id="tAiFields" hidden>
+        <label>Instrução para a IA *</label><textarea id="tInstruction" placeholder="Ex.: Acesse o portal, baixe o relatório de ontem e resuma os números"></textarea>
+        <label style="margin-top:10px">Contexto</label><textarea id="tContext" placeholder="Ambiente, cliente, observações que ajudam a IA…"></textarea>
+        <label style="margin-top:10px">Memórias anexadas</label><div id="tMemoryPick" class="row"></div>
+      </div>
+      <div class="full" id="tStepsFields" hidden>
+        <label>Passos (em ordem)</label>
+        <div id="tSteps"></div>
+        <button class="btn ghost small" id="addStep" type="button">+ adicionar passo</button>
+      </div>
+      <div class="full"><label>Recorrência</label>
+        <select id="tType">
+          <option value="once">Uma vez</option>
+          <option value="daily">Diária</option>
+          <option value="weekly">Semanal</option>
+          <option value="monthly">Mensal</option>
+        </select>
+      </div>
+      <div id="tDateWrap"><label>Data (uma vez / início)</label><input type="date" id="tDate"></div>
+      <div><label>Hora</label><input type="time" id="tTime" value="09:00"></div>
+      <div id="tWeekdaysWrap" hidden><label>Dias da semana</label>
+        <div class="weekdays">
+          <label><input type="checkbox" data-wd="1"> S</label><label><input type="checkbox" data-wd="2"> T</label>
+          <label><input type="checkbox" data-wd="3"> Q</label><label><input type="checkbox" data-wd="4"> Q</label>
+          <label><input type="checkbox" data-wd="5"> S</label><label><input type="checkbox" data-wd="6"> S</label>
+          <label><input type="checkbox" data-wd="7"> D</label>
+        </div>
+      </div>
+      <div id="tDomWrap" hidden><label>Dia do mês (1–28)</label><input type="number" id="tDom" min="1" max="28" value="15"></div>
+      <div><label>Data fim (opcional)</label><input type="date" id="tEnd"></div>
+      <div><label>Fuso horário</label><input id="tTz" placeholder="America/Sao_Paulo"></div>
+      <div><label>Habilitada</label><label class="switch"><input type="checkbox" id="tEnabled" checked> sim</label></div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn" id="tSave">Salvar tarefa</button>
+      <button class="btn ghost" id="tCancel" type="button">Cancelar</button>
+    </div>
+    <p class="status" id="tStatus"></p>
+  </section>
+
+  <!-- ============ CREDENCIAIS ============ -->
+  <section id="tab-creds" class="tab-pane">
+    <div class="vault-box" id="vaultBox"></div>
+    <div class="bar">
+      <button class="btn" id="newCred">+ Nova credencial</button>
+      <span class="muted" id="credCount"></span>
+    </div>
+    <div class="list" id="credList"></div>
+  </section>
+
+  <section id="credEditor" class="editor" hidden>
+    <h2 id="credEditorTitle">Nova credencial</h2>
+    <div class="grid">
+      <div><label>Nome *</label><input id="cName" placeholder="Portal Cliente X"></div>
+      <div><label>URL do site *</label><input id="cUrl" placeholder="https://portal.example"></div>
+      <div><label>Seletor de usuário *</label><input id="cUserSel" placeholder="#username"></div>
+      <div><label>Seletor de senha *</label><input id="cPassSel" placeholder="#password"></div>
+      <div><label>Seletor do botão (opcional)</label><input id="cSubmitSel" placeholder="button[type=submit]"></div>
+      <div><label>Usuário *</label><input id="cUsername" autocomplete="off"></div>
+      <div><label>Senha *</label><input id="cPassword" type="password" autocomplete="off"></div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn" id="cSave">Salvar credencial</button>
+      <button class="btn ghost" id="cCancel" type="button">Cancelar</button>
+    </div>
+    <p class="status" id="cStatus"></p>
+  </section>
+
+  <!-- ============ MEMÓRIA ============ -->
+  <section id="tab-memory" class="tab-pane">
+    <div class="bar">
+      <button class="btn" id="newMemory">+ Nova nota</button>
+      <span class="muted" id="memoryCount"></span>
+    </div>
+    <div class="list" id="memoryList"></div>
+  </section>
+
+  <section id="memoryEditor" class="editor" hidden>
+    <h2 id="memoryEditorTitle">Nova nota de memória</h2>
+    <div class="grid">
+      <div><label>Chave *</label><input id="mKey" placeholder="cliente-x"></div>
+      <div><label>Tags (separadas por vírgula)</label><input id="mTags" placeholder="cliente-x, financeiro"></div>
+      <div class="full"><label>Texto *</label><textarea id="mText" placeholder="Detalhes que a IA deve lembrar ao executar tarefas…"></textarea></div>
+    </div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn" id="mSave">Salvar nota</button>
+      <button class="btn ghost" id="mCancel" type="button">Cancelar</button>
+    </div>
+    <p class="status" id="mStatus"></p>
+  </section>
+</div>
+<script type="module" src="schedule.js"></script>
+</body>
+</html>
