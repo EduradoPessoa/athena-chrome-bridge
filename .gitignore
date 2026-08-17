@@ -1,0 +1,17 @@
+# Node
+node_modules/
+
+# Ambiente / segredos
+.env
+.env.*
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# IDE / SO
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

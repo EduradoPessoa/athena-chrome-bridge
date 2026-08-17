@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+  :root{color-scheme:dark}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#0b0d14;color:#eef1f8;width:280px;margin:0;padding:16px}
+  h1{font-size:16px;margin:0 0 4px}
+  p{font-size:12px;color:#8b93ab;margin:0 0 14px}
+  .status{display:flex;align-items:center;gap:8px;background:#151a2b;border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:12px;margin-bottom:12px}
+  .dot{width:10px;height:10px;border-radius:99px;background:#f87171}
+  .dot.on{background:#34d399;box-shadow:0 0 8px #34d399}
+  b{font-size:13px}
+  .url{font-size:11px;color:#5d647c}
+  .btn-row{display:flex;gap:8px}
+  .btn-row button{flex:1;background:linear-gradient(135deg,#6d5df6,#22d3ee);color:#fff;border:none;border-radius:10px;padding:11px;font-weight:700;cursor:pointer}
+  .btn-row button.ghost{background:#151a2b;border:1px solid rgba(255,255,255,.12);color:#eef1f8}
+  .btn-row button.ghost:hover{border-color:#6d5df6}
+  .ai-status{font-size:11px;color:#8b93ab;margin:10px 2px 0}
+  .ai-status.ok{color:#34d399}
+  ul{font-size:11px;color:#8b93ab;padding-left:16px;margin:12px 0 0}
+</style>
+</head>
+<body>
+  <h1>🦉 Athena Chrome Bridge</h1>
+  <p>Controle do navegador para agentes de IA.</p>
+  <div class="status">
+    <span class="dot" id="dot"></span>
+    <div>
+      <b id="statusText">Conectando…</b>
+      <div class="url" id="statusUrl">ws://localhost:9222</div>
+    </div>
+  </div>
+  <div class="btn-row">
+    <button id="settings" class="ghost">⚙️ Configurações</button>
+    <button id="reconnect">Reconectar</button>
+  </div>
+  <p class="ai-status" id="aiStatus"></p>
+  <ul>
+    <li>Servidor: <b>node server/bridge.js</b></li>
+    <li>API: <b>http://localhost:3001/api</b></li>
+  </ul>
+  <script src="popup.js"></script>
+</body>
+</html>

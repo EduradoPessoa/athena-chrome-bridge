@@ -1,0 +1,16 @@
+{
+  "name": "athena-chrome-bridge",
+  "version": "1.0.0",
+  "description": "Servidor ponte entre a extensão do Chrome e um agente de IA (DeepSeek/MCP).",
+  "main": "bridge.js",
+  "scripts": {
+    "start": "node bridge.js",
+    "mcp": "node mcp.mjs",
+    "deepseek": "node deepseek-agent.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "ws": "^8.18.0",
+    "zod": "^3.23.8"
+  }
+}

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Athena — Configurações</title>
+<style>
+  :root{color-scheme:dark}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Segoe UI',system-ui,sans-serif;background:#0b0d14;color:#eef1f8;
+    min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+    background-image:radial-gradient(600px 300px at 20% 0%,rgba(109,93,246,.15),transparent),
+                     radial-gradient(600px 300px at 80% 100%,rgba(34,211,238,.12),transparent);
+  }
+  .card{width:440px;max-width:100%;background:#11141f;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:28px;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+  h1{font-size:20px;margin-bottom:6px}
+  .sub{font-size:13px;color:#8b93ab;margin-bottom:22px;line-height:1.5}
+  label{display:block;font-size:12px;font-weight:600;color:#aab2c9;margin:14px 0 6px}
+  input{
+    width:100%;background:#151a2b;border:1px solid rgba(255,255,255,.12);border-radius:10px;
+    color:#eef1f8;padding:10px 12px;font:13px inherit;outline:none;
+  }
+  input:focus{border-color:#6d5df6}
+  input::placeholder{color:#5d647c}
+  .hint{font-size:11px;color:#5d647c;margin-top:6px}
+  .row{display:flex;gap:8px;margin-top:22px}
+  button{
+    flex:1;border:none;border-radius:10px;padding:11px;font-weight:700;cursor:pointer;font:inherit;
+    background:linear-gradient(135deg,#6d5df6,#22d3ee);color:#fff;
+  }
+  button.ghost{background:#151a2b;border:1px solid rgba(255,255,255,.12);color:#eef1f8}
+  button.ghost:hover{border-color:#6d5df6}
+  button:disabled{opacity:.5;cursor:default}
+  .status{margin-top:16px;font-size:13px;line-height:1.5;min-height:20px}
+  .status.ok{color:#34d399}
+  .status.err{color:#fca5a5}
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1>🦉 Athena — Configurações</h1>
+    <p class="sub">Chave de API usada pela linha de comando da IA (botão flutuante 🦉).<br>A chave fica salva apenas no armazenamento local do Chrome.</p>
+
+    <form id="form" autocomplete="off">
+      <label for="apiKey">Chave da API (DeepSeek ou OpenAI-compatible) *</label>
+      <input type="password" id="apiKey" autocomplete="off" placeholder="sk-…" spellcheck="false">
+      <p class="hint">Sua chave nunca sai desta extensão: as chamadas vão direto da extensão para a API.</p>
+
+      <label for="apiUrl">URL da API (chat completions)</label>
+      <input type="url" id="apiUrl" placeholder="https://api.deepseek.com/chat/completions" spellcheck="false">
+
+      <label for="model">Modelo</label>
+      <input type="text" id="model" placeholder="deepseek-chat" spellcheck="false">
+
+      <div class="row">
+        <button type="submit">Salvar</button>
+        <button type="button" id="test" class="ghost">Testar conexão</button>
+        <button type="button" id="clear" class="ghost">Limpar</button>
+      </div>
+      <p class="status" id="status"></p>
+    </form>
+  </main>
+  <script src="options.js"></script>
+</body>
+</html>

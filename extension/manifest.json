@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Athena Chrome Bridge",
+  "version": "1.1.0",
+  "description": "Extensão que permite a um agente de IA ler e controlar o navegador (inspirado no Claude Chrome). Inclui botão flutuante com linha de comando para a IA.",
+  "permissions": ["tabs", "activeTab", "scripting", "storage", "alarms", "tabGroups"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Athena Chrome Bridge"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "commands": {
+    "toggle-athena": {
+      "suggested_key": { "default": "Alt+Shift+A" },
+      "description": "Abrir/fechar a linha de comando da IA"
+    }
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ]
+}

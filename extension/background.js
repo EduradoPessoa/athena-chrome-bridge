@@ -1,0 +1,341 @@
+// ====================================================================
+// Athena Chrome Bridge — background service worker (MV3)
+// Conecta ao servidor ponte (ws://localhost:9222) e roteia comandos.
+// - Badge no ícone: verde = conectado | roxo = executando
+// - Direciona comandos para a última aba/janela focada (determinístico)
+// - Linha de comando da IA: recebe prompts do botão flutuante, decide as
+//   ações com a API (DeepSeek/OpenAI-compatible) e executa no navegador.
+// ====================================================================
+const WS_URL = 'ws://localhost:9222';
+const GROUP_TITLE = '🦉 Athena';
+const GROUP_COLOR = 'purple';
+const TAB_GROUP_ID_NONE = (chrome.tabGroups && chrome.tabGroups.TAB_GROUP_ID_NONE) || -1;
+let ws = null;
+let reconnectTimer = null;
+let lastTabId = null;
+
+function connect() {
+  try {
+    ws = new WebSocket(WS_URL);
+  } catch (e) {
+    scheduleReconnect();
+    return;
+  }
+
+  ws.onopen = () => {
+    console.log('[bridge] conectado ao servidor ponte');
+    chrome.storage.local.set({ status: 'connected', url: WS_URL });
+    setBadge('ON', '#34d399');
+    try { chrome.alarms.create('athena-keepalive', { periodInMinutes: 0.5 }); } catch (e) {}
+  };
+
+  ws.onmessage = async (ev) => {
+    let msg;
+    try { msg = JSON.parse(ev.data); } catch { return; }
+    if (msg.type === 'ping') { send({ type: 'pong', id: msg.id }); return; }
+    setBadge('…', '#6d5df6');
+    await handleCommand(msg);
+    setBadge('ON', '#34d399');
+  };
+
+  ws.onclose = () => {
+    console.log('[bridge] desconectado');
+    chrome.storage.local.set({ status: 'disconnected' });
+    setBadge('', null);
+    scheduleReconnect();
+  };
+
+  ws.onerror = () => {};
+}
+
+function setBadge(text, color) {
+  try { chrome.action.setBadgeText({ text: text || '' }); } catch (e) {}
+  if (color) { try { chrome.action.setBadgeBackgroundColor({ color }); } catch (e) {} }
+}
+
+function scheduleReconnect() {
+  if (reconnectTimer) return;
+  reconnectTimer = setTimeout(() => { reconnectTimer = null; connect(); }, 3000);
+}
+
+function send(obj) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj));
+}
+
+async function handleCommand(msg) {
+  try {
+    const result = await execute(msg);
+    send({ type: 'result', id: msg.id, ok: true, result });
+  } catch (e) {
+    send({ type: 'result', id: msg.id, ok: false, error: String((e && e.message) || e) });
+  }
+}
+
+async function execute(cmd) {
+  switch (cmd.type) {
+    case 'list_tabs':    return listTabs();
+    case 'navigate':     return navigate(cmd);
+    case 'open_tab':     return openTab(cmd);
+    case 'activate_tab': return activateTab(cmd);
+    case 'screenshot':   return screenshot(cmd);
+    default: {
+      const tab = await getTargetTab(cmd);
+      return sendToContent(tab, cmd);
+    }
+  }
+}
+
+// Determina a aba alvo: tabId explícito > última aba focada > janela focada
+async function getTargetTab(cmd) {
+  if (cmd.tabId) return chrome.tabs.get(cmd.tabId);
+  if (lastTabId) {
+    try { return await chrome.tabs.get(lastTabId); } catch (e) { /* segue */ }
+  }
+  const win = await chrome.windows.getLastFocused({ populate: true });
+  const active = (win.tabs || []).find((t) => t.active) || (win.tabs || [])[0];
+  if (active) return active;
+  throw new Error('Nenhuma aba encontrada');
+}
+
+function listTabs() {
+  return chrome.tabs.query({}).then((tabs) =>
+    tabs.map((t) => ({ id: t.id, title: t.title, url: t.url, active: t.active, windowId: t.windowId })),
+  );
+}
+
+async function navigate(cmd) {
+  const tab = await getTargetTab(cmd);
+  const t = await chrome.tabs.update(tab.id, { url: cmd.url });
+  await groupTab(t.id);
+  return { ok: true, tabId: t.id, url: t.url, groupId: t.groupId || null };
+}
+
+// Abre uma nova aba e a adiciona ao grupo "Athena"
+async function openTab(cmd) {
+  const tab = await chrome.tabs.create({ url: cmd.url || 'about:blank', active: true });
+  const groupId = await groupTab(tab.id);
+  return { ok: true, tabId: tab.id, url: tab.url, groupId };
+}
+
+// Garante que a aba esteja dentro do grupo visual "🦉 Athena"
+async function groupTab(tabId) {
+  try {
+    const tab = await chrome.tabs.get(tabId);
+    if (tab.groupId && tab.groupId !== TAB_GROUP_ID_NONE) return tab.groupId;
+    const groupId = await chrome.tabs.group({ tabIds: [tabId] });
+    await chrome.tabGroups.update(groupId, { title: GROUP_TITLE, color: GROUP_COLOR });
+    return groupId;
+  } catch (e) {
+    return null;
+  }
+}
+
+function activateTab(cmd) {
+  return chrome.tabs
+    .update(cmd.tabId, { active: true })
+    .then((t) => ({ ok: true, tabId: t.id }));
+}
+
+function screenshot(cmd) {
+  return getTargetTab(cmd)
+    .then((tab) => chrome.tabs.captureVisibleTab(tab.windowId, { format: 'png' }))
+    .then((dataUrl) => ({ dataUrl }));
+}
+
+async function sendToContent(tab, cmd) {
+  try {
+    await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
+  } catch (e) { /* já injetado ou página restrita */ }
+
+  return new Promise((resolve, reject) => {
+    chrome.tabs.sendMessage(
+      tab.id,
+      { type: cmd.type, selector: cmd.selector, value: cmd.value, script: cmd.script },
+      (resp) => {
+        if (chrome.runtime.lastError) return reject(new Error(chrome.runtime.lastError.message));
+        resolve(resp);
+      },
+    );
+  });
+}
+
+// Acompanha a última aba/janela focada pelo usuário
+chrome.tabs.onActivated.addListener((info) => {
+  lastTabId = info.tabId;
+});
+
+chrome.windows.onFocusChanged.addListener((windowId) => {
+  if (windowId !== chrome.windows.WINDOW_ID_NONE) {
+    chrome.tabs.query({ active: true, windowId }, (tabs) => {
+      if (tabs[0]) lastTabId = tabs[0].id;
+    });
+  }
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === 'athena-keepalive') {
+    if (!ws || ws.readyState !== WebSocket.OPEN) connect();
+    else send({ type: 'ping' });
+  }
+});
+
+// ====================================================================
+// IA — linha de comando (botão flutuante)
+// Usa a chave de API salva nas Configurações da extensão.
+// ====================================================================
+const AI_DEFAULT_URL = 'https://api.deepseek.com/chat/completions';
+const AI_DEFAULT_MODEL = 'deepseek-chat';
+const AI_MAX_STEPS = 10;
+
+const AI_SYSTEM_PROMPT =
+  'Você é a Athena, um agente de IA que controla o navegador Chrome do usuário. ' +
+  'O usuário digita comandos em linguagem natural e você decide quais ferramentas usar ' +
+  '(navegar, abrir abas, ler páginas, buscar/clicar/preencher elementos, executar JS, screenshot etc.). ' +
+  'Responda em português brasileiro, de forma objetiva. ' +
+  'Ao concluir a tarefa, resuma o que fez e o resultado obtido.';
+
+const AI_TOOLS = [
+  { type: 'function', function: { name: 'navigate', description: 'Navega a aba ativa para uma URL (e a agrupa)', parameters: { type: 'object', properties: { url: { type: 'string', description: 'URL completa' } }, required: ['url'] } } },
+  { type: 'function', function: { name: 'open_tab', description: 'Abre uma nova aba no grupo Athena e navega para uma URL', parameters: { type: 'object', properties: { url: { type: 'string', description: 'URL completa' } }, required: ['url'] } } },
+  { type: 'function', function: { name: 'read_page', description: 'Lê título, URL e texto da página ativa', parameters: { type: 'object', properties: {} } } },
+  { type: 'function', function: { name: 'get_page_text', description: 'Texto bruto da página ativa', parameters: { type: 'object', properties: {} } } },
+  { type: 'function', function: { name: 'find', description: 'Busca elementos por seletor CSS', parameters: { type: 'object', properties: { selector: { type: 'string' } }, required: ['selector'] } } },
+  { type: 'function', function: { name: 'click', description: 'Clica num elemento', parameters: { type: 'object', properties: { selector: { type: 'string' } }, required: ['selector'] } } },
+  { type: 'function', function: { name: 'fill', description: 'Preenche um campo', parameters: { type: 'object', properties: { selector: { type: 'string' }, value: { type: 'string' } }, required: ['selector', 'value'] } } },
+  { type: 'function', function: { name: 'evaluate', description: 'Executa JavaScript na página', parameters: { type: 'object', properties: { script: { type: 'string' } }, required: ['script'] } } },
+  { type: 'function', function: { name: 'screenshot', description: 'Screenshot da aba ativa', parameters: { type: 'object', properties: {} } } },
+  { type: 'function', function: { name: 'list_tabs', description: 'Lista as abas abertas', parameters: { type: 'object', properties: {} } } },
+];
+
+const AI_CMD_MAP = {
+  navigate: (a) => ({ type: 'navigate', url: a.url }),
+  open_tab: (a) => ({ type: 'open_tab', url: a.url }),
+  read_page: () => ({ type: 'read_page' }),
+  get_page_text: () => ({ type: 'get_page_text' }),
+  find: (a) => ({ type: 'find', selector: a.selector }),
+  click: (a) => ({ type: 'click', selector: a.selector }),
+  fill: (a) => ({ type: 'fill', selector: a.selector, value: a.value }),
+  evaluate: (a) => ({ type: 'evaluate', script: a.script }),
+  screenshot: () => ({ type: 'screenshot' }),
+  list_tabs: () => ({ type: 'list_tabs' }),
+};
+
+async function getAiConfig() {
+  const data = await chrome.storage.local.get(['apiKey', 'apiUrl', 'model']);
+  return {
+    apiKey: (data.apiKey || '').trim(),
+    apiUrl: (data.apiUrl || AI_DEFAULT_URL).trim(),
+    model: (data.model || AI_DEFAULT_MODEL).trim(),
+  };
+}
+
+function notifyTab(tabId, msg) {
+  if (!tabId) return;
+  chrome.tabs.sendMessage(tabId, msg).catch(() => {});
+}
+
+async function aiChat(cfg, body) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 90000);
+  try {
+    const res = await fetch(cfg.apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + cfg.apiKey },
+      body: JSON.stringify(body),
+      signal: ctrl.signal,
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(() => '');
+      throw new Error('IA HTTP ' + res.status + (t ? ' — ' + t.slice(0, 300) : ''));
+    }
+    return await res.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function execAiTool(name, args) {
+  const maker = AI_CMD_MAP[name];
+  if (!maker) return { ok: false, error: 'Ferramenta desconhecida: ' + name };
+  try {
+    const result = await execute(maker(args || {}));
+    return { ok: true, result };
+  } catch (e) {
+    return { ok: false, error: String((e && e.message) || e) };
+  }
+}
+
+// Loop da IA: chama a API, executa as ferramentas pedidas e devolve a resposta final
+async function runAiCommand(tabId, prompt) {
+  const cfg = await getAiConfig();
+  if (!cfg.apiKey) return { ok: false, error: 'sem_api_key' };
+
+  const messages = [
+    { role: 'system', content: AI_SYSTEM_PROMPT },
+    { role: 'user', content: prompt },
+  ];
+
+  for (let i = 0; i < AI_MAX_STEPS; i++) {
+    const data = await aiChat(cfg, { model: cfg.model, messages, tools: AI_TOOLS, temperature: 0.2 });
+    const msg = data.choices && data.choices[0] && data.choices[0].message;
+    if (!msg) throw new Error('Resposta inesperada da IA');
+
+    if (msg.tool_calls && msg.tool_calls.length) {
+      messages.push(msg);
+      for (const tc of msg.tool_calls) {
+        let args = {};
+        try { args = JSON.parse(tc.function.arguments || '{}'); } catch (e) { /* args vazios */ }
+        const label = '🔧 ' + tc.function.name + (tc.function.arguments ? ' ' + tc.function.arguments.slice(0, 200) : '');
+        notifyTab(tabId, { type: 'athena_progress', text: label });
+        const result = await execAiTool(tc.function.name, args);
+        messages.push({ role: 'tool', tool_call_id: tc.id, content: JSON.stringify(result).slice(0, 4000) });
+      }
+      continue;
+    }
+
+    const text = (msg.content || '').trim();
+    if (text) notifyTab(tabId, { type: 'athena_response', text });
+    return { ok: true, text };
+  }
+  throw new Error('Limite de passos da IA atingido');
+}
+
+// Mensagens do popup e do content script
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (!msg || typeof msg !== 'object') return false;
+
+  if (msg.type === 'reconnect') {
+    connect();
+    if (sendResponse) sendResponse({ ok: true });
+    return false;
+  }
+
+  if (msg.type === 'athena_command') {
+    const tabId = sender && sender.tab ? sender.tab.id : null;
+    runAiCommand(tabId, String(msg.text || '').trim())
+      .then(sendResponse)
+      .catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+
+  if (msg.type === 'athena_get_config') {
+    getAiConfig().then((cfg) =>
+      sendResponse({ ok: true, hasKey: !!cfg.apiKey, apiUrl: cfg.apiUrl, model: cfg.model }),
+    );
+    return true;
+  }
+
+  return false;
+});
+
+// Atalho de teclado (Alt+Shift+A) — abre/fecha a linha de comando da IA
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command !== 'toggle-athena') return;
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab || !tab.id) return;
+  try { await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] }); } catch (e) {}
+  try { await chrome.tabs.sendMessage(tab.id, { type: 'athena_toggle' }); } catch (e) {}
+});
+
+chrome.runtime.onInstalled.addListener(() => connect());
+connect();
