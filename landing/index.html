@@ -37,47 +37,70 @@
 
 <!-- ===================== HERO ===================== -->
 <section class="hero" id="topo">
-  <div class="aurora"></div>
+  <div class="hero-bg" aria-hidden="true">
+    <div class="grid-overlay"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
   <div class="hero-grid container">
     <div class="hero-copy">
-      <p class="eyebrow reveal">🦉 Extensão gratuita e open source para Chrome</p>
-      <h1 class="reveal">Sua IA no controle<br>do <span class="grad">seu navegador</span></h1>
-      <p class="sub reveal">A Athena Chrome Bridge conecta o Chrome a qualquer IA OpenAI-compatible — como a DeepSeek V4. Clique no botão flutuante, digite o comando e ela navega, lê, clica e preenche por você.</p>
+      <span class="badge reveal"><span class="badge-dot"></span>Extensão gratuita · Open source · Manifest V3</span>
+      <h1 class="reveal">Sua IA no <span class="grad">comando</span><br>do navegador.</h1>
+      <p class="sub reveal">A Athena conecta o Chrome a qualquer IA OpenAI-compatible — DeepSeek V4, GPT e outros. Digite o comando; ela navega, lê, clica e preenche por você.</p>
       <div class="cta-row reveal">
         <a class="btn-primary btn-lg" href="https://github.com/EduradoPessoa/athena-chrome-bridge" target="_blank" rel="noopener">Ver no GitHub →</a>
         <a class="btn-ghost btn-lg" href="#como">Como funciona</a>
       </div>
-      <p class="microtrust reveal">🔒 Sem telemetria · a chave de API fica no seu navegador</p>
+      <div class="hero-meta reveal">
+        <span>⚡ Pronto em 3 passos</span>
+        <span>🔒 Zero telemetria</span>
+        <span><kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd> para abrir</span>
+      </div>
     </div>
 
     <div class="hero-visual reveal">
-      <div class="window">
-        <div class="window-bar">
+      <div class="terminal" id="terminal">
+        <div class="term-bar">
           <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
-          <span class="window-url">https://exemplo.com.br</span>
+          <span class="term-title">athena — session</span>
+          <span class="term-badge">IA ativa</span>
         </div>
-        <div class="window-body">
-          <div class="page-skeleton">
-            <span class="sk sk-title"></span>
-            <span class="sk sk-line"></span>
-            <span class="sk sk-line short"></span>
-            <span class="sk sk-line"></span>
-            <span class="sk sk-line short"></span>
-          </div>
-          <div class="athena-panel" id="heroPanel">
-            <div class="panel-head"><span>🦉 Athena — comando para a IA</span><span class="panel-x">✕</span></div>
-            <div class="panel-log">
-              <div class="msg user">abra o Google e pesquise “Athena Chrome Bridge”</div>
-              <div class="msg tool">🔧 navigate → google.com</div>
-              <div class="msg tool">🔧 fill → campo de busca</div>
-              <div class="msg ai">Feito ✅ — resultados na tela em segundos.</div>
-            </div>
-            <div class="panel-input"><span class="input-ph">Digite um comando para a IA…</span><span class="send">➤</span></div>
-          </div>
-          <button class="fab" id="heroFab" aria-label="Abrir comando da IA">🦉</button>
+        <div class="term-body">
+          <div class="tline"><span class="t-prefix">$</span> athena <span class="t-arg">&quot;abra o Google e pesquise Athena Chrome Bridge&quot;</span></div>
+          <div class="tline"><span class="t-tool">🔧</span> navigate <span class="t-dim">→ google.com</span></div>
+          <div class="tline"><span class="t-tool">🔧</span> fill <span class="t-dim">→ campo de busca</span></div>
+          <div class="tline"><span class="t-tool">🔧</span> click <span class="t-dim">→ pesquisar</span></div>
+          <div class="tline"><span class="t-tool">🔧</span> read_page <span class="t-dim">→ resultados</span></div>
+          <div class="tline t-ok"><span class="t-tool">✅</span> Feito em 4 ações — sem escrever código.</div>
+          <div class="tline"><span class="t-prefix">$</span> <span class="cursor"></span></div>
+        </div>
+        <div class="term-foot">
+          <span>Alt+Shift+A</span>
+          <span>DeepSeek V4</span>
+          <span>MCP ready</span>
+          <span>v1.2.0</span>
         </div>
       </div>
     </div>
+  </div>
+</section>
+
+<!-- ===================== TICKER ===================== -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    <span>navigate</span><span class="tick-sep">·</span><span>click</span><span class="tick-sep">·</span><span>fill</span><span class="tick-sep">·</span><span>read_page</span><span class="tick-sep">·</span><span>screenshot</span><span class="tick-sep">·</span><span>DeepSeek V4</span><span class="tick-sep">·</span><span>MCP</span><span class="tick-sep">·</span><span>zero telemetria</span><span class="tick-sep">·</span><span>open source</span><span class="tick-sep">·</span>
+    <span>navigate</span><span class="tick-sep">·</span><span>click</span><span class="tick-sep">·</span><span>fill</span><span class="tick-sep">·</span><span>read_page</span><span class="tick-sep">·</span><span>screenshot</span><span class="tick-sep">·</span><span>DeepSeek V4</span><span class="tick-sep">·</span><span>MCP</span><span class="tick-sep">·</span><span>zero telemetria</span><span class="tick-sep">·</span><span>open source</span><span class="tick-sep">·</span>
+  </div>
+</div>
+
+<!-- ===================== STATS ===================== -->
+<section class="stats">
+  <div class="container stats-grid">
+    <div class="stat reveal"><b class="counter" data-target="3">0</b><span>passos para começar</span></div>
+    <div class="stat reveal"><b class="counter" data-target="12">0</b><span>comandos de automação</span></div>
+    <div class="stat reveal"><b class="counter" data-target="0">0</b><span>telemetria</span></div>
+    <div class="stat reveal"><b class="counter" data-target="100" data-suffix="%">0</b><span>open source</span></div>
   </div>
 </section>
 
