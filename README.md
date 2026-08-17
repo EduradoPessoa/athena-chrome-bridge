@@ -11,6 +11,8 @@
 > **você** configurou, no momento do comando. Detalhes na seção
 > [Segurança e privacidade](#-seguranca-e-privacidade).
 
+> 🌐 **Landing page oficial:** https://eduradopessoa.github.io/athena-chrome-bridge/
+
 O projeto tem dois componentes que trabalham juntos:
 
 | Componente | Papel |
