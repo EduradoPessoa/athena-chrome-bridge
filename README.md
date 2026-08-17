@@ -5,6 +5,12 @@
 > conteúdo, interagir com elementos, executar JavaScript e capturar screenshots —
 > além de uma **linha de comando flutuante** para conversar com a IA de qualquer página.
 
+> 🔒 **Segurança em primeiro lugar** — sem telemetria, sem coleta em segundo plano e
+> nada sai da sua máquina sem um comando seu. A chave de API fica no
+> `chrome.storage.local` e o conteúdo da página só é enviado ao provedor de IA que
+> **você** configurou, no momento do comando. Detalhes na seção
+> [Segurança e privacidade](#-seguranca-e-privacidade).
+
 O projeto tem dois componentes que trabalham juntos:
 
 | Componente | Papel |
@@ -188,11 +194,15 @@ curl -X POST http://localhost:3001/api/command \
 ```
 athena-chrome-bridge/
 ├── extension/            # Extensão Chrome (Manifest V3)
-│   ├── manifest.json     # Permissões, atalhos e páginas da extensão
+│   ├── manifest.json     # Permissões, ícones, atalhos e páginas da extensão
 │   ├── background.js     # Service worker: WebSocket, comandos e loop da IA
 │   ├── content.js        # Executa comandos na página + botão flutuante
 │   ├── popup.html/.js    # Popup com status, reconexão e acesso às configurações
 │   ├── options.html/.js  # Página de configurações (chave de API)
+│   └── icons/            # Ícones da extensão (16/32/48/128)
+├── scripts/              # Geração de ícones e empacotamento para a loja
+├── POLITICA-DE-PRIVACIDADE.md
+├── CHROME-WEB-STORE.md
 └── server/               # Servidor ponte
     ├── bridge.js         # API HTTP (3001) + WebSocket (9222)
     ├── mcp.mjs           # Servidor MCP (stdio)
@@ -200,12 +210,48 @@ athena-chrome-bridge/
     └── package.json
 ```
 
-## 🛡️ Segurança
+## 🛡️ Segurança e privacidade
 
-- A **chave de API fica apenas no `chrome.storage.local`** da extensão — não é enviada a nenhum servidor intermediário.
-- O **servidor ponte escuta apenas em `localhost`** — não o exponha publicamente sem autenticação.
-- A extensão pede permissão `<all_urls>` porque precisa injetar o content script em qualquer página que você visitar; ela **não coleta nem envia dados** de navegação.
-- A IA só executa ações após você digitar o comando — nada é automatizado sem o seu pedido.
+A extensão foi projetada com **privacidade por padrão**: sem telemetria, sem coleta
+em segundo plano e sem comunicação com servidores de terceiros sem uma ação sua.
+Consulte também a [Política de Privacidade](POLITICA-DE-PRIVACIDADE.md) completa.
+
+### Como os dados fluem
+
+| Dado | Quando | Para onde vai |
+|---|---|---|
+| **Prompt do usuário** | Você digita um comando na linha de comando | Direto para o **provedor de IA** que você configurou (HTTPS) |
+| **Conteúdo da página** (título/texto/HTML) | Somente se o seu comando exigir e a IA decidir usar a ferramenta | Ao provedor de IA, na mesma conversa |
+| **Chave de API** | Salva por você nas Configurações | Fica **apenas no `chrome.storage.local`**; é enviada somente ao provedor para autenticar a sua requisição |
+| **Comandos estruturados** | Agente externo via servidor ponte | Trafegam **apenas em `localhost`** (HTTP 3001 / WebSocket 9222) |
+
+### Permissões e por quê
+
+| Permissão | Motivo |
+|---|---|
+| `host_permissions: <all_urls>` | Injetar o botão flutuante e ler/controlar a página **que você está visitando**, sob demanda |
+| `tabs` · `activeTab` · `scripting` | Listar/ativar abas e executar os comandos que **você** solicitar |
+| `storage` | Guardar a chave de API e o status de conexão **localmente** |
+| `alarms` · `tabGroups` | Manter a conexão WebSocket e organizar as abas criadas pela IA |
+
+### O que a extensão **NÃO** faz
+
+- ❌ Não coleta histórico, dados de formulários, cookies nem localização
+- ❌ Não tem telemetria, analytics ou anúncios
+- ❌ Não envia nada para servidores de terceiros sem o seu comando
+- ❌ Não executa ações sozinha — a IA só age **depois** que você digita o comando
+- ❌ Não contém código remoto (tudo é estático, exigência do Manifest V3)
+
+### Boas práticas ao usar
+
+- 🔑 **Chave de API**: guarde com cuidado — quem tiver acesso a ela pode usá-la no
+  seu provedor. Remova com o botão **Limpar** nas Configurações quando necessário.
+- 🖥️ **Servidor ponte**: escuta apenas em `localhost` e **não deve ser exposto
+  publicamente** sem autenticação e HTTPS (use só na sua máquina ou em rede interna).
+- 🤖 **Agente externo**: ao conectar agentes via MCP/HTTP, use apenas agentes em que
+  você confia — eles recebem as mesmas capacidades de controle do navegador.
+- ⚡ **Ferramenta `evaluate`**: executa JavaScript na página **somente** quando um
+  comando pede; use com moderação em páginas sensíveis.
 
 ## ❓ Solução de problemas
 
