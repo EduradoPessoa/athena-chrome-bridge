@@ -5,7 +5,11 @@
 // - Direciona comandos para a última aba/janela focada (determinístico)
 // - Linha de comando da IA: recebe prompts do botão flutuante, decide as
 //   ações com a API (DeepSeek/OpenAI-compatible) e executa no navegador.
+// - Agendador de tarefas + cofre de credenciais (vault).
 // ====================================================================
+import { createVault, unlock, encryptSecret, decryptSecret } from './vault.js';
+import { nextRun } from './scheduler.js';
+
 const WS_URL = 'ws://localhost:9222';
 const GROUP_TITLE = '🦉 Athena';
 const GROUP_COLOR = 'purple';
@@ -78,6 +82,7 @@ async function execute(cmd) {
     case 'open_tab':     return openTab(cmd);
     case 'activate_tab': return activateTab(cmd);
     case 'screenshot':   return screenshot(cmd);
+    case 'login':        return loginStep(cmd);
     default: {
       const tab = await getTargetTab(cmd);
       return sendToContent(tab, cmd);
@@ -142,6 +147,31 @@ function screenshot(cmd) {
     .then((dataUrl) => ({ dataUrl }));
 }
 
+// ====================================================================
+// Credenciais — passo de login (determinístico, nunca exposto à IA)
+// ====================================================================
+async function resolveCredential(profileId) {
+  if (!vaultKey) throw new Error('vault_locked');
+  const data = await chrome.storage.local.get('athena.credentials');
+  const creds = data['athena.credentials'] || [];
+  const c = creds.find((x) => x.id === profileId);
+  if (!c) throw new Error('credencial não encontrada: ' + profileId);
+  const plain = await decryptSecret(vaultKey, c.secret);
+  const [username, password] = plain.split('\u0000');
+  return {
+    username, password,
+    userSelector: c.userSelector, passSelector: c.passSelector, submitSelector: c.submitSelector,
+  };
+}
+
+async function loginStep(cmd) {
+  const c = await resolveCredential(cmd.profileId);
+  await execute({ type: 'fill', selector: c.userSelector, value: c.username, tabId: cmd.tabId });
+  await execute({ type: 'fill', selector: c.passSelector, value: c.password, tabId: cmd.tabId });
+  if (c.submitSelector) await execute({ type: 'click', selector: c.submitSelector, tabId: cmd.tabId });
+  return { ok: true, loggedIn: true };
+}
+
 async function sendToContent(tab, cmd) {
   try {
     await chrome.scripting.executeScript({ target: { tabId: tab.id }, files: ['content.js'] });
@@ -176,6 +206,8 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === 'athena-keepalive') {
     if (!ws || ws.readyState !== WebSocket.OPEN) connect();
     else send({ type: 'ping' });
+  } else if (alarm.name === SCHEDULE_ALARM) {
+    schedulerTick();
   }
 });
 
@@ -300,6 +332,101 @@ async function runAiCommand(tabId, prompt) {
   throw new Error('Limite de passos da IA atingido');
 }
 
+// ====================================================================
+// Cofre de credenciais (vault) — chave apenas em memória
+// ====================================================================
+let vaultKey = null; // CryptoKey em memória; null = bloqueado (auto-lock ao reiniciar)
+
+async function vaultStatus() {
+  const data = await chrome.storage.local.get('athena.vault');
+  const meta = data['athena.vault'] || null;
+  return { exists: !!meta, locked: !vaultKey };
+}
+
+// ====================================================================
+// Agendador de tarefas (heartbeat via chrome.alarms, mín. 30s)
+// ====================================================================
+const SCHEDULE_ALARM = 'athena-scheduler';
+
+async function schedulerTick() {
+  const data = await chrome.storage.local.get('athena.tasks');
+  const tasks = data['athena.tasks'] || [];
+  const now = Date.now();
+  let changed = false;
+  for (const task of tasks) {
+    if (!task.enabled) continue;
+    const next = nextRun(task, now);
+    if (next !== null && next <= now) {
+      changed = true;
+      await executeTask(task); // definido na seção do executor (Task 7)
+      task.lastRun = Date.now();
+      task.nextRun = nextRun(task, Date.now());
+      if (task.schedule.type === 'once' || task.nextRun === null) task.enabled = false;
+    } else if (task.nextRun !== next) {
+      task.nextRun = next;
+      changed = true;
+    }
+  }
+  if (changed) await chrome.storage.local.set({ 'athena.tasks': tasks });
+}
+
+// ====================================================================
+// Executor de tarefas (modo script determinístico | modo ai com contexto)
+// ====================================================================
+async function executeTask(task) {
+  const startedAt = Date.now();
+  const entry = { taskId: task.id, name: task.name, startedAt, status: 'ok', summary: '' };
+  try {
+    let tab = await chrome.tabs.create({ url: 'about:blank', active: true });
+    await groupTab(tab.id);
+    if (task.mode === 'script') {
+      const steps = [...(task.steps || [])];
+      if (steps[0]?.type === 'navigate') {
+        tab = await chrome.tabs.update(tab.id, { url: steps[0].url });
+        steps.shift();
+      }
+      for (const step of steps) await execute({ ...step, tabId: tab.id });
+      entry.summary = `${steps.length} passos executados`;
+    } else {
+      const memory = await loadMemory(task.memoryIds || []);
+      const prompt = buildAiPrompt(task, memory);
+      const res = await runAiCommand(tab.id, prompt);
+      entry.summary = res.ok ? (res.text || '').slice(0, 200) : 'falhou';
+      if (!res.ok) throw new Error(res.error || 'erro na execução da IA');
+    }
+    if (task.closeTab) { try { await chrome.tabs.remove(tab.id); } catch (e) { /* segue */ } }
+  } catch (e) {
+    const reason = String((e && e.message) || e);
+    entry.status = reason === 'vault_locked' ? 'skipped' : 'error';
+    if (reason === 'vault_locked') entry.reason = 'vault_locked';
+    entry.error = reason;
+  }
+  entry.finishedAt = Date.now();
+  await pushHistory(entry);
+  notifyTaskResult(entry);
+  return entry;
+}
+
+function buildAiPrompt(task, memory) {
+  const parts = [`Tarefa agendada: ${task.name}`, `Instrução: ${task.instruction}`];
+  if (task.context) parts.push(`Contexto: ${task.context}`);
+  if (memory.length) parts.push(`Memória:\n${memory.map((m) => `- ${m.text}`).join('\n')}`);
+  parts.push('Execute os passos necessários e resuma o resultado.');
+  return parts.join('\n');
+}
+
+async function loadMemory(ids) {
+  const data = await chrome.storage.local.get('athena.memory');
+  const mem = data['athena.memory'] || [];
+  return mem.filter((m) => ids.includes(m.id));
+}
+
+async function pushHistory(entry) {
+  const data = await chrome.storage.local.get('athena.taskHistory');
+  const hist = data['athena.taskHistory'] || [];
+  await chrome.storage.local.set({ 'athena.taskHistory': [entry, ...hist].slice(0, 200) });
+}
+
 // Mensagens do popup e do content script
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg || typeof msg !== 'object') return false;
@@ -308,6 +435,132 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     connect();
     if (sendResponse) sendResponse({ ok: true });
     return false;
+  }
+
+  // ---- cofre ----
+  if (msg.type === 'athena_vault_status') {
+    vaultStatus().then(sendResponse);
+    return true;
+  }
+  if (msg.type === 'athena_vault_create') {
+    createVault(String(msg.password || ''))
+      .then(async (meta) => {
+        vaultKey = await unlock(String(msg.password || ''), meta);
+        await chrome.storage.local.set({ 'athena.vault': meta });
+        sendResponse({ ok: true, locked: !vaultKey });
+      })
+      .catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+  if (msg.type === 'athena_vault_unlock') {
+    chrome.storage.local
+      .get('athena.vault')
+      .then(async (data) => {
+        const meta = data['athena.vault'];
+        vaultKey = meta ? await unlock(String(msg.password || ''), meta) : null;
+        sendResponse({ ok: !!vaultKey, locked: !vaultKey });
+      })
+      .catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+  if (msg.type === 'athena_vault_lock') {
+    vaultKey = null;
+    sendResponse({ ok: true, locked: true });
+    return false;
+  }
+
+  // ---- credenciais (exigem cofre desbloqueado) ----
+  if (msg.type === 'athena_cred_list') {
+    chrome.storage.local
+      .get('athena.credentials')
+      .then((data) => {
+        const creds = data['athena.credentials'] || [];
+        // nunca expõe o segredo (cifrado ou não) à UI além do necessário
+        sendResponse({ ok: true, creds: creds.map(({ secret, ...pub }) => pub) });
+      })
+      .catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+  if (msg.type === 'athena_cred_save') {
+    (async () => {
+      if (!vaultKey) return { ok: false, error: 'vault_locked' };
+      const data = await chrome.storage.local.get('athena.credentials');
+      const creds = data['athena.credentials'] || [];
+      const secret = await encryptSecret(vaultKey, `${msg.username || ''}\u0000${msg.password || ''}`);
+      const rec = {
+        id: msg.id || 'c_' + Date.now().toString(36),
+        name: String(msg.name || '').trim(),
+        url: String(msg.url || '').trim(),
+        userSelector: String(msg.userSelector || '').trim(),
+        passSelector: String(msg.passSelector || '').trim(),
+        submitSelector: String(msg.submitSelector || '').trim(),
+        secret,
+      };
+      if (!rec.name || !rec.url || !rec.userSelector || !rec.passSelector) {
+        return { ok: false, error: 'campos obrigatórios: nome, URL, seletores de usuário e senha' };
+      }
+      const next = msg.id ? creds.map((c) => (c.id === msg.id ? rec : c)) : [...creds, rec];
+      await chrome.storage.local.set({ 'athena.credentials': next });
+      return { ok: true, id: rec.id };
+    })().then(sendResponse).catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+  if (msg.type === 'athena_cred_delete') {
+    (async () => {
+      const data = await chrome.storage.local.get('athena.credentials');
+      const creds = data['athena.credentials'] || [];
+      await chrome.storage.local.set({ 'athena.credentials': creds.filter((c) => c.id !== msg.id) });
+      return { ok: true };
+    })().then(sendResponse).catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+
+  // ---- tarefas agendadas ----
+  if (msg.type === 'athena_task_list' || msg.type === 'athena_task_history') {
+    const key = msg.type === 'athena_task_history' ? 'athena.taskHistory' : 'athena.tasks';
+    chrome.storage.local
+      .get(key)
+      .then((data) => sendResponse({ ok: true, data: data[key] || [] }))
+      .catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+  if (msg.type === 'athena_task_save') {
+    (async () => {
+      const data = await chrome.storage.local.get('athena.tasks');
+      const tasks = data['athena.tasks'] || [];
+      const rec = { ...msg.task, updatedAt: Date.now() };
+      if (!rec.id) rec.id = 't_' + Date.now().toString(36);
+      rec.nextRun = rec.enabled !== false ? nextRun(rec, Date.now()) : null;
+      const next = rec.id && tasks.some((t) => t.id === rec.id)
+        ? tasks.map((t) => (t.id === rec.id ? rec : t))
+        : [...tasks, rec];
+      await chrome.storage.local.set({ 'athena.tasks': next });
+      return { ok: true, nextRun: rec.nextRun };
+    })().then(sendResponse).catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+  if (msg.type === 'athena_task_delete') {
+    (async () => {
+      const data = await chrome.storage.local.get('athena.tasks');
+      const tasks = data['athena.tasks'] || [];
+      await chrome.storage.local.set({ 'athena.tasks': tasks.filter((t) => t.id !== msg.id) });
+      return { ok: true };
+    })().then(sendResponse).catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+  if (msg.type === 'athena_task_run_now') {
+    (async () => {
+      const data = await chrome.storage.local.get('athena.tasks');
+      const tasks = data['athena.tasks'] || [];
+      const task = tasks.find((t) => t.id === msg.id);
+      if (!task) return { ok: false, error: 'tarefa não encontrada' };
+      const entry = await executeTask(task);
+      task.lastRun = Date.now();
+      task.nextRun = nextRun(task, Date.now());
+      await chrome.storage.local.set({ 'athena.tasks': tasks });
+      return { ok: true, entry };
+    })().then(sendResponse).catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
   }
 
   if (msg.type === 'athena_command') {
@@ -339,3 +592,4 @@ chrome.commands.onCommand.addListener(async (command) => {
 
 chrome.runtime.onInstalled.addListener(() => connect());
 connect();
+chrome.alarms.create(SCHEDULE_ALARM, { periodInMinutes: 0.5 });
