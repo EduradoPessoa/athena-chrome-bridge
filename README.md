@@ -17,7 +17,7 @@ O projeto tem dois componentes que trabalham juntos:
 
 | Componente | Papel |
 |---|---|
-| `extension/` | Extensão Chrome: injeta o botão flutuante, executa comandos na página e expõe a configuração de chave de API |
+| `extension/` | Extensão Chrome: botão flutuante, linha de comando da IA, **agendamento de tarefas** e cofre de credenciais |
 | `server/` | Servidor ponte: API HTTP + WebSocket para agentes externos, servidor MCP (stdio) e agente DeepSeek |
 
 ---
@@ -26,7 +26,9 @@ O projeto tem dois componentes que trabalham juntos:
 
 - **Botão flutuante com linha de comando** — clique no 🦉 em qualquer página e dê comandos em linguagem natural para a IA (ex.: *"abra o Google e me diga qual é o título da página"*).
 - **Chave de API configurável** — a extensão guarda a chave (DeepSeek ou qualquer provedor OpenAI-compatible) no armazenamento local do Chrome; nada sai da sua máquina.
-- **11 ferramentas de controle do navegador** — navegar, abrir abas, ler texto/HTML, buscar elementos, clicar, preencher formulários, executar JavaScript e tirar screenshots.
+- **⏰ Agendamento de tarefas** — data, hora e recorrência (diária/semanal/mensal) com contexto, memória e perfis de login, executadas automaticamente pelo service worker.
+- **🔐 Cofre de credenciais** — senhas de sites criptografadas (AES-GCM 256) com senha-mestre; a chave fica só em memória e o cofre bloqueia ao reiniciar o Chrome.
+- **12 ferramentas de controle do navegador** — navegar, abrir abas, ler texto/HTML, buscar elementos, clicar, preencher formulários, executar JavaScript e tirar screenshots.
 - **Servidor ponte** — API HTTP em `localhost:3001` + WebSocket em `localhost:9222` para agentes externos controlarem o navegador.
 - **Servidor MCP (stdio)** — exponha as ferramentas para qualquer cliente MCP (Claude Code, Cursor, etc.).
 - **Atalho de teclado** — `Alt+Shift+A` abre/fecha a linha de comando.
@@ -233,6 +235,33 @@ dias, mensal) — com fuso horário configurável. Cada tarefa guarda:
 Abra **⏰ Agendamentos** pelo popup da extensão (`schedule.html`) para criar tarefas,
 gerenciar o cofre e a memória e acompanhar o histórico de execuções.
 
+### Por dentro (para contribuidores)
+
+**Armazenamento** (`chrome.storage.local`):
+
+| Chave | Conteúdo |
+|---|---|
+| `athena.tasks` | Tarefas agendadas (name, mode `script`/`ai`, steps, schedule, enabled) |
+| `athena.memory` | Notas de memória (key, text, tags) |
+| `athena.credentials` | Perfis de login com `secret` criptografado (AES-GCM) |
+| `athena.vault` | Metadados do cofre (salt, iterations, verifier) — nunca a chave |
+| `athena.taskHistory` | Últimas 200 execuções (status, summary, error) |
+
+**Passos de uma tarefa `script`:** `navigate` · `fill` · `click` · `screenshot` · `login` (usa perfil do cofre).
+
+**Mensagens internas (`chrome.runtime.sendMessage`):**
+
+| Grupo | Mensagens |
+|---|---|
+| Cofre | `athena_vault_status` · `athena_vault_create` · `athena_vault_unlock` · `athena_vault_lock` |
+| Credenciais | `athena_cred_list` · `athena_cred_save` · `athena_cred_delete` |
+| Tarefas | `athena_task_list` · `athena_task_save` · `athena_task_delete` · `athena_task_run_now` · `athena_task_history` |
+| Memória | `athena_memory_list` · `athena_memory_save` · `athena_memory_delete` |
+
+**Agendador:** o service worker mantém um alarme `athena-scheduler` (mín. 30s) que
+confere `nextRun <= now` para cada tarefa habilitada — o agendamento é por relógio
+(`scheduler.js`), não por precisão de alarme.
+
 > ⚠️ **Limitações:** as tarefas só executam com o Chrome aberto (o agendador usa
 > `chrome.alarms`). Se uma tarefa usar `login` com o cofre bloqueado, ela é marcada
 > como *ignorada* até você desbloqueá-lo. Senhas nunca são enviadas à IA nem
@@ -259,8 +288,9 @@ Consulte também a [Política de Privacidade](POLITICA-DE-PRIVACIDADE.md) comple
 |---|---|
 | `host_permissions: <all_urls>` | Injetar o botão flutuante e ler/controlar a página **que você está visitando**, sob demanda |
 | `tabs` · `activeTab` · `scripting` | Listar/ativar abas e executar os comandos que **você** solicitar |
-| `storage` | Guardar a chave de API e o status de conexão **localmente** |
-| `alarms` · `tabGroups` | Manter a conexão WebSocket e organizar as abas criadas pela IA |
+| `storage` | Guardar localmente chave de API, tarefas agendadas, memória e credenciais **criptografadas** |
+| `alarms` · `tabGroups` | Agendar tarefas (heartbeat de 30s) e organizar as abas criadas pela IA |
+| `notifications` | Avisar o resultado das tarefas agendadas (concluída/ignorada/falhou) |
 
 ### O que a extensão **NÃO** faz
 
@@ -293,6 +323,17 @@ Consulte também a [Política de Privacidade](POLITICA-DE-PRIVACIDADE.md) comple
 | Botão flutuante não aparece | Página restrita do Chrome | O content script não roda em `chrome://`, na Chrome Web Store etc. — use `Alt+Shift+A` em páginas comuns |
 | Erro `IA HTTP 401` | Chave inválida ou expirada | Atualize a chave nas Configurações |
 | `Timeout aguardando resposta da extensão` | Extensão não carregada ou aba sem resposta | Recarregue a extensão em `chrome://extensions` e tente novamente |
+| Tarefa agendada **não roda** | Chrome fechado no horário ou cofre bloqueado (passo `login`) | Deixe o Chrome aberto; desbloqueie o cofre em **⏰ Agendamentos** |
+| Cofre **bloqueado** | Service worker reiniciado | Desbloqueie com a senha-mestre (não há recuperação em caso de perda) |
+
+## 🧪 Testes
+
+Os módulos de lógica pura têm testes com `node:test` (sem dependências):
+
+```bash
+cd extension
+npm test   # 15 testes: scheduler (recorrência/nextRun) + vault (AES-GCM/PBKDF2)
+```
 
 ## 🤝 Contribuindo
 
