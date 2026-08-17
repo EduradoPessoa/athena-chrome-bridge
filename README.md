@@ -197,12 +197,17 @@ curl -X POST http://localhost:3001/api/command \
 athena-chrome-bridge/
 ├── extension/            # Extensão Chrome (Manifest V3)
 │   ├── manifest.json     # Permissões, ícones, atalhos e páginas da extensão
-│   ├── background.js     # Service worker: WebSocket, comandos e loop da IA
+│   ├── background.js     # Service worker: WebSocket, comandos, loop da IA, agendador e cofre
 │   ├── content.js        # Executa comandos na página + botão flutuante
-│   ├── popup.html/.js    # Popup com status, reconexão e acesso às configurações
+│   ├── scheduler.js      # Recorrência/nextRun (lógica pura, testável)
+│   ├── vault.js          # Cofre AES-GCM/PBKDF2 (lógica pura, testável)
+│   ├── popup.html/.js    # Popup com status, reconexão, configurações e agendamentos
 │   ├── options.html/.js  # Página de configurações (chave de API)
+│   ├── schedule.html/.js # Agendamentos: tarefas, cofre e memória
 │   └── icons/            # Ícones da extensão (16/32/48/128)
+├── test/                 # Testes node:test (scheduler + vault)
 ├── scripts/              # Geração de ícones e empacotamento para a loja
+├── docs/plans/           # Planos de implementação
 ├── POLITICA-DE-PRIVACIDADE.md
 ├── CHROME-WEB-STORE.md
 └── server/               # Servidor ponte
@@ -211,6 +216,27 @@ athena-chrome-bridge/
     ├── deepseek-agent.mjs # Agente DeepSeek com function calling
     └── package.json
 ```
+
+## ⏰ Agendamento de tarefas
+
+Automatize rotinas com **data, hora e recorrência** (uma vez, diária, semanal com
+dias, mensal) — com fuso horário configurável. Cada tarefa guarda:
+
+- **Contexto** — observações sobre o ambiente/cliente usadas na execução;
+- **Memória** — notas reutilizáveis (chave + texto + tags) anexadas à tarefa;
+- **Credenciais** — perfis de login (URL + seletores + usuário/senha) guardados
+  **criptografados** em um cofre com **senha-mestre** (AES-GCM 256, chave derivada
+  por PBKDF2 e mantida apenas em memória);
+- **Passos** — modo `script` (navegar → login → clicar → screenshot, etc.) ou modo
+  `ai` (instrução em linguagem natural com contexto + memória).
+
+Abra **⏰ Agendamentos** pelo popup da extensão (`schedule.html`) para criar tarefas,
+gerenciar o cofre e a memória e acompanhar o histórico de execuções.
+
+> ⚠️ **Limitações:** as tarefas só executam com o Chrome aberto (o agendador usa
+> `chrome.alarms`). Se uma tarefa usar `login` com o cofre bloqueado, ela é marcada
+> como *ignorada* até você desbloqueá-lo. Senhas nunca são enviadas à IA nem
+> registradas em logs.
 
 ## 🛡️ Segurança e privacidade
 
@@ -254,6 +280,9 @@ Consulte também a [Política de Privacidade](POLITICA-DE-PRIVACIDADE.md) comple
   você confia — eles recebem as mesmas capacidades de controle do navegador.
 - ⚡ **Ferramenta `evaluate`**: executa JavaScript na página **somente** quando um
   comando pede; use com moderação em páginas sensíveis.
+- 🔐 **Cofre de credenciais**: senhas de sites ficam **criptografadas** (AES-GCM 256)
+  com chave derivada de uma **senha-mestre** (PBKDF2) que nunca é armazenada — o
+  cofre bloqueia ao reiniciar o Chrome e não há recuperação em caso de perda.
 
 ## ❓ Solução de problemas
 

@@ -27,6 +27,7 @@ A extensão permite que o usuário:
 | **Prompt do usuário** | Quando o usuário digita um comando na linha de comando | Enviado diretamente da extensão para o **provedor de IA** configurado (ex.: DeepSeek), via HTTPS |
 | **Conteúdo da página** (título, texto, HTML) | Somente quando o comando do usuário exige (ex.: "leia a página") e a IA decide usar a ferramenta correspondente | Enviado ao provedor de IA na mesma conversa |
 | **Chave de API** | Armazenada quando o usuário salva nas Configurações | **Apenas no `chrome.storage.local`** do navegador; enviada somente ao provedor de IA para autenticar a requisição do usuário |
+| **Credenciais de sites** (usuário/senha de perfis de login) | Quando o usuário cria perfis de login em **Agendamentos** | **Criptografadas (AES-GCM 256)** com chave derivada de uma senha-mestre (PBKDF2) que **nunca é armazenada** — a chave fica só em memória e o cofre bloqueia ao reiniciar o Chrome. Usadas exclusivamente para preencher formulários de login em passos determinísticos; **nunca** são enviadas à IA nem registradas em logs |
 | **Comandos estruturados** (navegar, clicar etc.) | Quando um agente externo usa o servidor ponte local | Trafegam apenas entre o servidor local (`localhost:3001/9222`) e a extensão; não saem da máquina |
 
 **A extensão NÃO coleta, em nenhuma circunstância:** histórico de navegação, dados
@@ -57,6 +58,10 @@ do usuário ou do agente que ele mesmo configurou.
 
 - A chave de API permanece no `chrome.storage.local` até o usuário removê-la
   (botão **Limpar** nas Configurações).
+- Credenciais de sites (Agendamentos) ficam **criptografadas** no
+  `chrome.storage.local`; a senha-mestre do cofre nunca é armazenada e o cofre
+  bloqueia ao reiniciar o navegador. Em caso de perda da senha-mestre, não há
+  recuperação — o usuário pode resetar o cofre (removendo as credenciais).
 - O histórico de conversa do painel flutuante é **volátil** (mantido apenas em
   memória na página aberta) e desaparece ao fechar/atualizar a aba.
 - A extensão não mantém servidores próprios e não armazena dados do usuário em

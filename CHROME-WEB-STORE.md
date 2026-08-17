@@ -29,6 +29,7 @@ Como funciona:
 
 Recursos:
 • Linha de comando flutuante com histórico de conversa;
+• Agendamento de tarefas: data, hora e recorrência (diária/semanal/mensal) com contexto, memória e perfis de login criptografados (cofre com senha-mestre);
 • Compatível com DeepSeek e qualquer provedor OpenAI-compatible (URL e modelo configuráveis);
 • Chave de API guardada apenas no armazenamento local do Chrome — nada sai da sua máquina sem o seu comando;
 • Servidor ponte opcional (localhost) para integrar agentes externos via API HTTP ou MCP;
@@ -61,8 +62,9 @@ athena, ai, browser automation, controle de navegador, automação, agente, mcp,
 | `host_permissions: <all_urls>` | Necessária para injetar o botão flutuante e executar comandos na página que o usuário está visitando, sob demanda |
 | `tabs` / `activeTab` | Listar e ativar abas quando o usuário (ou o agente que ele configurou) pede |
 | `scripting` | Executar os comandos de leitura/interação solicitados pelo usuário |
-| `storage` | Salvar a chave de API e o status de conexão localmente |
-| `alarms` / `tabGroups` | Manter a conexão WebSocket e organizar as abas criadas pela IA |
+| `storage` | Salvar a chave de API, tarefas agendadas e credenciais criptografadas localmente |
+| `alarms` / `tabGroups` | Agendar tarefas (heartbeat) e organizar as abas criadas pela IA |
+| `notifications` | Avisar o usuário sobre o resultado das tarefas agendadas |
 
 ## 🔒 Declaração de privacidade (para colar)
 
