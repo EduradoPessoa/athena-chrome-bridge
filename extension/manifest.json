@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Athena Chrome Bridge",
   "version": "1.2.0",
-  "description": "Controle o navegador com IA: botão flutuante com linha de comando para agentes (DeepSeek/OpenAI-compatible) e integração com servidor ponte/MCP.",
+  "description": "Controle o navegador com IA: botão flutuante com linha de comando e integração com servidor ponte/MCP para agentes.",
   "permissions": ["tabs", "activeTab", "scripting", "storage", "alarms", "tabGroups"],
   "host_permissions": ["<all_urls>"],
   "minimum_chrome_version": "116",
