@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Athena Chrome Bridge — Sua IA no controle do seu navegador</title>
+<meta name="description" content="Extensão gratuita e open source que conecta o Chrome a qualquer IA OpenAI-compatible (como a DeepSeek V4). Clique no botão flutuante, digite o comando e ela navega, lê, clica e preenche por você.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ===================== NAV ===================== -->
+<header class="nav" id="nav">
+  <div class="nav-inner">
+    <a class="brand" href="#topo">
+      <span class="brand-mark">🦉</span>
+      <span class="brand-name">Athena <b>Chrome Bridge</b></span>
+    </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="#beneficios">Benefícios</a>
+      <a href="#como">Como funciona</a>
+      <a href="#caso">DeepSeek V4</a>
+      <a href="#seguranca">Segurança</a>
+      <a href="#github">GitHub</a>
+    </nav>
+    <div class="nav-actions">
+      <a class="btn-primary" href="https://github.com/EduradoPessoa/athena-chrome-bridge" target="_blank" rel="noopener">Ver no GitHub</a>
+      <button class="menu-btn" id="menuBtn" aria-label="Abrir menu">☰</button>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== HERO ===================== -->
+<section class="hero" id="topo">
+  <div class="aurora"></div>
+  <div class="hero-grid container">
+    <div class="hero-copy">
+      <p class="eyebrow reveal">🦉 Extensão gratuita e open source para Chrome</p>
+      <h1 class="reveal">Sua IA no controle<br>do <span class="grad">seu navegador</span></h1>
+      <p class="sub reveal">A Athena Chrome Bridge conecta o Chrome a qualquer IA OpenAI-compatible — como a DeepSeek V4. Clique no botão flutuante, digite o comando e ela navega, lê, clica e preenche por você.</p>
+      <div class="cta-row reveal">
+        <a class="btn-primary btn-lg" href="https://github.com/EduradoPessoa/athena-chrome-bridge" target="_blank" rel="noopener">Ver no GitHub →</a>
+        <a class="btn-ghost btn-lg" href="#como">Como funciona</a>
+      </div>
+      <p class="microtrust reveal">🔒 Sem telemetria · a chave de API fica no seu navegador</p>
+    </div>
+
+    <div class="hero-visual reveal">
+      <div class="window">
+        <div class="window-bar">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="window-url">https://exemplo.com.br</span>
+        </div>
+        <div class="window-body">
+          <div class="page-skeleton">
+            <span class="sk sk-title"></span>
+            <span class="sk sk-line"></span>
+            <span class="sk sk-line short"></span>
+            <span class="sk sk-line"></span>
+            <span class="sk sk-line short"></span>
+          </div>
+          <div class="athena-panel" id="heroPanel">
+            <div class="panel-head"><span>🦉 Athena — comando para a IA</span><span class="panel-x">✕</span></div>
+            <div class="panel-log">
+              <div class="msg user">abra o Google e pesquise “Athena Chrome Bridge”</div>
+              <div class="msg tool">🔧 navigate → google.com</div>
+              <div class="msg tool">🔧 fill → campo de busca</div>
+              <div class="msg ai">Feito ✅ — resultados na tela em segundos.</div>
+            </div>
+            <div class="panel-input"><span class="input-ph">Digite um comando para a IA…</span><span class="send">➤</span></div>
+          </div>
+          <button class="fab" id="heroFab" aria-label="Abrir comando da IA">🦉</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== BENEFÍCIOS ===================== -->
+<section class="section support" id="beneficios">
+  <div class="container">
+    <h2 class="section-title reveal">Um navegador que trabalha <span class="muted">com você</span></h2>
+    <div class="support-grid">
+      <div class="support-item reveal">
+        <h3>⚡ Produtividade imediata</h3>
+        <p>Rotinas repetitivas viram um comando: abrir, buscar, preencher e confirmar — sem escrever uma linha de código.</p>
+      </div>
+      <div class="support-item reveal">
+        <h3>🔒 Privacidade por padrão</h3>
+        <p>Sem telemetria. A chave de API e os dados ficam na sua máquina; nada é enviado sem o seu comando.</p>
+      </div>
+      <div class="support-item reveal">
+        <h3>🧩 Qualquer IA OpenAI-compatible</h3>
+        <p>DeepSeek V4, GPT e outros: você escolhe o modelo e a URL nas configurações — sem amarras.</p>
+      </div>
+      <div class="support-item reveal">
+        <h3>🌐 Open source e auditável</h3>
+        <p>Código aberto no GitHub e gratuito para sempre. Sem pegadinha, sem assinatura escondida.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== COMO FUNCIONA ===================== -->
+<section class="section how" id="como">
+  <div class="container">
+    <h2 class="section-title reveal">Pronto em 3 passos</h2>
+    <div class="steps">
+      <div class="step reveal"><span class="step-num">1</span><h3>Instale</h3><p>Carregue a extensão no Chrome — menos de 2 minutos, sem cadastro.</p></div>
+      <div class="step reveal"><span class="step-num">2</span><h3>Configure</h3><p>Cole sua chave de API na tela de configurações e teste a conexão.</p></div>
+      <div class="step reveal"><span class="step-num">3</span><h3>Comande</h3><p>Clique no botão flutuante 🦉 (ou use <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>A</kbd>) e peça em linguagem natural.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== CASO DE USO: DEEPSEEK V4 ===================== -->
+<section class="section caso" id="caso">
+  <div class="container caso-grid">
+    <div class="caso-copy reveal">
+      <p class="eyebrow">Caso de uso</p>
+      <h2 class="section-title">DeepSeek V4 <span class="grad">na prática</span></h2>
+      <p class="section-sub">Com a chave da DeepSeek V4 configurada, a Athena vira um assistente de verdade. O comando ao lado foi executado de ponta a ponta — só com linguagem natural.</p>
+      <ul class="caso-list">
+        <li>✔ Extrair dados de qualquer página</li>
+        <li>✔ Preencher formulários e clicar em botões</li>
+        <li>✔ Automatizar rotinas de suporte e atendimento</li>
+        <li>✔ Capturar screenshots e resumir páginas</li>
+      </ul>
+    </div>
+    <div class="caso-visual reveal">
+      <div class="window window-chat">
+        <div class="window-bar">
+          <span class="dot r"></span><span class="dot y"></span><span class="dot g"></span>
+          <span class="window-url">Athena — comando para a IA</span>
+        </div>
+        <div class="panel-log big">
+          <div class="msg user">abra o Google, pesquise “previsão do tempo São Paulo” e me diga a temperatura de amanhã</div>
+          <div class="msg tool">🔧 navigate → google.com</div>
+          <div class="msg tool">🔧 fill → campo de busca</div>
+          <div class="msg tool">🔧 click → pesquisar</div>
+          <div class="msg tool">🔧 read_page → resultados</div>
+          <div class="msg ai">Amanhã em São Paulo: máxima de 28°C, sol com algumas nuvens. ☀️</div>
+        </div>
+        <div class="panel-input"><span class="input-ph">Digite um comando para a IA…</span><span class="send">➤</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SEGURANÇA ===================== -->
+<section class="section seguranca" id="seguranca">
+  <div class="container">
+    <h2 class="section-title reveal">Segurança não é um extra.<br><span class="muted">É o padrão.</span></h2>
+    <p class="section-sub reveal">Construímos a Athena para ser transparente por natureza. O que ela faz com os seus dados está escrito — e é pouco.</p>
+    <div class="sec-grid">
+      <div class="sec-item reveal"><b>Zero telemetria</b><p>Nenhum dado é coletado em segundo plano. A extensão não tem analytics nem rastreadores.</p></div>
+      <div class="sec-item reveal"><b>Chave no seu navegador</b><p>A chave de API fica no <code>chrome.storage.local</code> — nunca sai da sua máquina.</p></div>
+      <div class="sec-item reveal"><b>Conteúdo só no comando</b><p>A página é enviada à IA apenas quando você digita um comando — e direto ao provedor, via HTTPS.</p></div>
+      <div class="sec-item reveal"><b>Sem código remoto</b><p>Tudo é estático e auditável (Manifest V3). Leia o código no GitHub se quiser.</p></div>
+    </div>
+    <p class="sec-link reveal"><a href="https://raw.githubusercontent.com/EduradoPessoa/athena-chrome-bridge/main/POLITICA-DE-PRIVACIDADE.md" target="_blank" rel="noopener">Política de privacidade completa →</a></p>
+  </div>
+</section>
+
+<!-- ===================== GITHUB ===================== -->
+<section class="section github" id="github">
+  <div class="container github-inner">
+    <div class="github-copy reveal">
+      <p class="eyebrow">Open source</p>
+      <h2 class="section-title">Código aberto,<br>feito para crescer <span class="grad">com você</span></h2>
+      <p class="section-sub">Extensão Manifest V3, servidor ponte (HTTP + WebSocket), servidor MCP e documentação completa — tudo em um repositório público, pronto para você explorar, contribuir e adaptar.</p>
+      <div class="cta-row">
+        <a class="btn-primary btn-lg" href="https://github.com/EduradoPessoa/athena-chrome-bridge" target="_blank" rel="noopener">⭐ Ver no GitHub</a>
+        <a class="btn-ghost btn-lg" href="https://github.com/EduradoPessoa/athena-chrome-bridge/blob/main/README.md" target="_blank" rel="noopener">Ler o README</a>
+      </div>
+    </div>
+    <div class="github-visual reveal">
+      <div class="repo">
+        <div class="repo-head"><span class="repo-dot"></span><span class="repo-name">EduradoPessoa / athena-chrome-bridge</span></div>
+        <div class="repo-body">
+          <p class="repo-desc">🦉 Athena Chrome Bridge — extensão que dá à IA o controle do navegador.</p>
+          <div class="repo-langs"><span class="lang js">JavaScript</span><span class="lang py">Python</span><span class="lang md">Markdown</span></div>
+          <div class="repo-row"><span>📄 README</span><span>🛡️ Política de privacidade</span><span>🛒 Chrome Web Store</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== PHOENYX ===================== -->
+<section class="section phoenyx" id="phoenyx">
+  <div class="container phoenyx-inner">
+    <div class="reveal">
+      <p class="eyebrow">Feito por</p>
+      <h2 class="section-title">Phoenyx <span class="grad">Tecnologia</span></h2>
+      <p class="section-sub">A Athena Chrome Bridge nasceu no time da Phoenyx — que cria produtos e ferramentas para quem vive de tecnologia, do ERP ao navegador. Conheça o que mais estamos construindo.</p>
+      <a class="btn-primary btn-lg" href="https://www.phoenyx.com.br" target="_blank" rel="noopener">Conhecer a Phoenyx →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="brand"><span class="brand-mark">🦉</span><span class="brand-name">Athena <b>Chrome Bridge</b></span></div>
+    <p>Extensão gratuita e open source — feita pela Phoenyx Tecnologia.</p>
+    <div class="footer-links">
+      <a href="https://github.com/EduradoPessoa/athena-chrome-bridge" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://raw.githubusercontent.com/EduradoPessoa/athena-chrome-bridge/main/POLITICA-DE-PRIVACIDADE.md" target="_blank" rel="noopener">Privacidade</a>
+      <a href="https://www.phoenyx.com.br" target="_blank" rel="noopener">Phoenyx</a>
+    </div>
+    <p class="copy">© 2026 Phoenyx Tecnologia.</p>
+  </div>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
