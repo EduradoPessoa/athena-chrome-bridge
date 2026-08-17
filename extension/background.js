@@ -103,8 +103,10 @@ async function getTargetTab(cmd) {
 }
 
 function listTabs() {
+  // Sem a permissão "tabs": a URL/título da aba são obtidos via read_page
+  // (content script) quando a IA precisar; aqui só IDs/estado.
   return chrome.tabs.query({}).then((tabs) =>
-    tabs.map((t) => ({ id: t.id, title: t.title, url: t.url, active: t.active, windowId: t.windowId })),
+    tabs.map((t) => ({ id: t.id, active: t.active, windowId: t.windowId })),
   );
 }
 
@@ -112,14 +114,14 @@ async function navigate(cmd) {
   const tab = await getTargetTab(cmd);
   const t = await chrome.tabs.update(tab.id, { url: cmd.url });
   await groupTab(t.id);
-  return { ok: true, tabId: t.id, url: t.url, groupId: t.groupId || null };
+  return { ok: true, tabId: t.id, groupId: t.groupId || null };
 }
 
 // Abre uma nova aba e a adiciona ao grupo "Athena"
 async function openTab(cmd) {
   const tab = await chrome.tabs.create({ url: cmd.url || 'about:blank', active: true });
   const groupId = await groupTab(tab.id);
-  return { ok: true, tabId: tab.id, url: tab.url, groupId };
+  return { ok: true, tabId: tab.id, groupId };
 }
 
 // Garante que a aba esteja dentro do grupo visual "🦉 Athena"

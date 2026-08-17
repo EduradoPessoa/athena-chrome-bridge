@@ -317,8 +317,8 @@ Consulte também a [Política de Privacidade](POLITICA-DE-PRIVACIDADE.md) comple
 
 | Permissão | Motivo |
 |---|---|
-| `host_permissions: <all_urls>` | Injetar o botão flutuante e ler/controlar a página **que você está visitando**, sob demanda |
-| `tabs` · `activeTab` · `scripting` | Listar/ativar abas e executar os comandos que **você** solicitar |
+| `host_permissions: <all_urls>` | Injetar o botão flutuante e executar comandos na página **que você está visitando** (o provedor de IA é configurável, então o host não pode ser restrito a um domínio) |
+| `scripting` | Executar o `content.js` sob demanda (atalho `Alt+Shift+A` e comandos da IA) |
 | `storage` | Guardar localmente chave de API, tarefas agendadas, memória e credenciais **criptografadas** |
 | `alarms` · `tabGroups` | Agendar tarefas (heartbeat de 30s) e organizar as abas criadas pela IA |
 | `notifications` | Avisar o resultado das tarefas agendadas (concluída/ignorada/falhou) |

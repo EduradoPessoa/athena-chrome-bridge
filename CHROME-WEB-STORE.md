@@ -73,15 +73,18 @@ including on a schedule.")*
 
 ## 📋 Permissões e justificativas (aba Privacy do dashboard)
 
+> Conjunto **mínimo** — `tabs` e `activeTab` foram removidos: a URL/título da página
+> são lidos pelo content script (`read_page`), sem precisar da permissão `tabs`.
+
 | Permissão | Justificativa |
 |---|---|
-| `host_permissions: <all_urls>` | Necessária para injetar o botão flutuante e executar comandos na página que o usuário está visitando, sob demanda |
-| `tabs` / `activeTab` | Listar e ativar abas quando o usuário (ou o agente que ele configurou) pede |
-| `scripting` | Executar os comandos de leitura/interação solicitados pelo usuário |
-| `storage` | Salvar a chave de API, tarefas agendadas e credenciais criptografadas localmente |
-| `alarms` / `tabGroups` | Agendar tarefas (heartbeat) e organizar as abas criadas pela IA |
-| `notifications` | Avisar o usuário sobre o resultado das tarefas agendadas |
-| `nativeMessaging` | Comunicar-se com o companion nativo opcional (Windows) que abre o Chrome na hora de tarefas agendadas — envia apenas timestamps, nenhum dado pessoal |
+| `host_permissions: <all_urls>` | Necessária para o propósito: o botão flutuante e os comandos da IA operam na página **que o usuário está visitando**, em qualquer site. Além disso, o provedor de IA é **configurável pelo usuário** (qualquer URL OpenAI-compatible — DeepSeek, GPT, Groq, Ollama local), então o acesso de host não pode ser restrito a um único domínio |
+| `scripting` | Executa o `content.js` sob demanda (atalho `Alt+Shift+A` e injeção defensiva antes de cada comando) |
+| `storage` | Persiste localmente: chave de API, tarefas agendadas, memória e credenciais **criptografadas** (cofre AES-GCM) |
+| `alarms` | Heartbeat do agendador (mín. 30s) e keep-alive da conexão WebSocket |
+| `tabGroups` | Organiza em um grupo visual "🦉 Athena" as abas abertas/criadas pela IA |
+| `notifications` | Avisa o usuário sobre o resultado das tarefas agendadas |
+| `nativeMessaging` | Comunicação com o **companion nativo opcional** (Windows) que abre o Chrome na hora de tarefas agendadas — envia apenas timestamps, nenhum dado pessoal |
 
 ## 🔒 Declaração de privacidade (para colar)
 
