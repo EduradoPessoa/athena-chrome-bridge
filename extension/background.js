@@ -367,7 +367,10 @@ async function schedulerTick() {
       changed = true;
     }
   }
-  if (changed) await chrome.storage.local.set({ 'athena.tasks': tasks });
+  if (changed) {
+    await chrome.storage.local.set({ 'athena.tasks': tasks });
+    syncSchedule();
+  }
 }
 
 // ====================================================================
@@ -435,6 +438,58 @@ function notifyTaskResult(entry) {
     : `${entry.name} — ${entry.summary || entry.error || ''}`.slice(0, 180);
   chrome.notifications.create({ type: 'basic', iconUrl: 'icons/icon128.png', title, message }).catch(() => {});
 }
+
+// ====================================================================
+// Companion nativo (Camada 2) — native messaging + catch-up no startup
+// ====================================================================
+const NATIVE_HOST = 'com.phoenyx.athena';
+let nativePort = null;
+let companionOk = false;
+
+function connectNative() {
+  try {
+    nativePort = chrome.runtime.connectNative(NATIVE_HOST);
+  } catch (e) {
+    nativePort = null;
+    return;
+  }
+  companionOk = false;
+  nativePort.onMessage.addListener((m) => { if (m && m.type === 'pong') companionOk = true; });
+  nativePort.onDisconnect.addListener(() => { nativePort = null; companionOk = false; });
+  try { nativePort.postMessage({ type: 'ping' }); } catch (e) { /* host ausente */ }
+}
+
+async function syncSchedule() {
+  if (!nativePort) return;
+  try {
+    const data = await chrome.storage.local.get('athena.tasks');
+    const tasks = (data['athena.tasks'] || []).filter((t) => t.enabled && t.nextRun);
+    nativePort.postMessage({ type: 'sync_schedule', nextRuns: tasks.map((t) => ({ id: t.id, name: t.name, at: t.nextRun })) });
+  } catch (e) { /* segue */ }
+}
+
+// Tarefas que venceram com o Chrome fechado rodam assim que ele abre
+async function catchUpMissed() {
+  const data = await chrome.storage.local.get('athena.tasks');
+  const tasks = data['athena.tasks'] || [];
+  const now = Date.now();
+  let changed = false;
+  for (const task of tasks) {
+    if (!task.enabled || !task.nextRun || task.nextRun > now) continue;
+    changed = true;
+    await executeTask(task);
+    task.lastRun = Date.now();
+    task.nextRun = nextRun(task, Date.now());
+    if (task.schedule.type === 'once' || task.nextRun === null) task.enabled = false;
+  }
+  if (changed) await chrome.storage.local.set({ 'athena.tasks': tasks });
+}
+
+chrome.runtime.onStartup.addListener(async () => {
+  connectNative();
+  await catchUpMissed();
+  syncSchedule();
+});
 
 // Mensagens do popup e do content script
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -544,6 +599,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         ? tasks.map((t) => (t.id === rec.id ? rec : t))
         : [...tasks, rec];
       await chrome.storage.local.set({ 'athena.tasks': next });
+      syncSchedule();
       return { ok: true, nextRun: rec.nextRun };
     })().then(sendResponse).catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
     return true;
@@ -553,6 +609,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       const data = await chrome.storage.local.get('athena.tasks');
       const tasks = data['athena.tasks'] || [];
       await chrome.storage.local.set({ 'athena.tasks': tasks.filter((t) => t.id !== msg.id) });
+      syncSchedule();
       return { ok: true };
     })().then(sendResponse).catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
     return true;
@@ -567,9 +624,14 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       task.lastRun = Date.now();
       task.nextRun = nextRun(task, Date.now());
       await chrome.storage.local.set({ 'athena.tasks': tasks });
+      syncSchedule();
       return { ok: true, entry };
     })().then(sendResponse).catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
     return true;
+  }
+  if (msg.type === 'athena_companion_status') {
+    sendResponse({ ok: true, connected: !!nativePort, companionOk });
+    return false;
   }
 
   // ---- memória ----
