@@ -97,7 +97,13 @@ async function handleNative(msg) {
 }
 
 /* ------------------------- modo daemon ------------------------- */
+const DRY_RUN = process.argv.includes('--dry-run'); // não abre o Chrome (testes)
+
 function launchChrome() {
+  if (DRY_RUN) {
+    log('DRY-RUN: abriria o Chrome');
+    return true;
+  }
   const chrome = getChromePath();
   if (!chrome) { log('chrome.exe não encontrado'); return false; }
   try {
@@ -132,8 +138,15 @@ function runDaemon() {
     process.exit(0); // outro daemon já está rodando
   }
   log('daemon iniciado');
-  daemonTick();
-  setInterval(daemonTick, POLL_MS);
+  const tick = () => {
+    daemonTick();
+    // acorda no vencimento mais próximo (ou no polling, o que vier antes)
+    const sched = loadJSON(SCHED_FILE, { nextRuns: [] });
+    const nextAt = Math.min(...(sched.nextRuns || []).map((r) => r.at).filter(Boolean));
+    const delay = nextAt && nextAt > Date.now() ? Math.min(nextAt - Date.now() + 500, POLL_MS) : POLL_MS;
+    setTimeout(tick, Math.max(1000, delay));
+  };
+  tick();
 }
 
 /* ------------------------- entrada ------------------------- */

@@ -1,0 +1,7 @@
+{
+  "name": "com.phoenyx.athena",
+  "description": "Athena Chrome Bridge — agendador com Chrome fechado (abre o Chrome na hora devida)",
+  "path": "C:\\<CAMINHO_ABSOLUTO>\\athena-wake.cmd",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://<ID_DA_EXTENSAO>/"]
+}
