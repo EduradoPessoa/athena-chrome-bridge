@@ -427,6 +427,15 @@ async function pushHistory(entry) {
   await chrome.storage.local.set({ 'athena.taskHistory': [entry, ...hist].slice(0, 200) });
 }
 
+function notifyTaskResult(entry) {
+  if (!chrome.notifications) return;
+  const title = entry.status === 'ok' ? '✅ Tarefa concluída' : entry.status === 'skipped' ? '⏭️ Tarefa ignorada' : '❌ Tarefa falhou';
+  const message = entry.status === 'skipped'
+    ? `${entry.name} — cofre bloqueado. Desbloqueie para executar.`
+    : `${entry.name} — ${entry.summary || entry.error || ''}`.slice(0, 180);
+  chrome.notifications.create({ type: 'basic', iconUrl: 'icons/icon128.png', title, message }).catch(() => {});
+}
+
 // Mensagens do popup e do content script
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (!msg || typeof msg !== 'object') return false;
@@ -559,6 +568,38 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       task.nextRun = nextRun(task, Date.now());
       await chrome.storage.local.set({ 'athena.tasks': tasks });
       return { ok: true, entry };
+    })().then(sendResponse).catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+
+  // ---- memória ----
+  if (msg.type === 'athena_memory_list') {
+    chrome.storage.local
+      .get('athena.memory')
+      .then((data) => sendResponse({ ok: true, data: data['athena.memory'] || [] }))
+      .catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+  if (msg.type === 'athena_memory_save') {
+    (async () => {
+      const data = await chrome.storage.local.get('athena.memory');
+      const mem = data['athena.memory'] || [];
+      const rec = { ...msg.item, updatedAt: Date.now() };
+      if (!rec.id) rec.id = 'm_' + Date.now().toString(36);
+      rec.tags = Array.isArray(rec.tags) ? rec.tags : String(rec.tags || '').split(',').map((s) => s.trim()).filter(Boolean);
+      if (!rec.key || !rec.text) return { ok: false, error: 'chave e texto são obrigatórios' };
+      const next = rec.id && mem.some((m) => m.id === rec.id) ? mem.map((m) => (m.id === rec.id ? rec : m)) : [...mem, rec];
+      await chrome.storage.local.set({ 'athena.memory': next });
+      return { ok: true, id: rec.id };
+    })().then(sendResponse).catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
+    return true;
+  }
+  if (msg.type === 'athena_memory_delete') {
+    (async () => {
+      const data = await chrome.storage.local.get('athena.memory');
+      const mem = data['athena.memory'] || [];
+      await chrome.storage.local.set({ 'athena.memory': mem.filter((m) => m.id !== msg.id) });
+      return { ok: true };
     })().then(sendResponse).catch((e) => sendResponse({ ok: false, error: String((e && e.message) || e) }));
     return true;
   }

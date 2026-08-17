@@ -36,6 +36,7 @@ const LABELS = {
   fill: 'preenchendo um campo',
   evaluate: 'executando script',
   submit: 'enviando formulário',
+  login: 'fazendo login no site',
 };
 
 async function run(msg) {

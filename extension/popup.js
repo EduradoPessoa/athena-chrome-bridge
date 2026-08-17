@@ -2,6 +2,7 @@ const dot = document.getElementById('dot');
 const statusText = document.getElementById('statusText');
 const statusUrl = document.getElementById('statusUrl');
 const aiStatus = document.getElementById('aiStatus');
+const vaultStatus = document.getElementById('vaultStatus');
 
 function refresh() {
   chrome.storage.local.get(['status', 'url'], (data) => {
@@ -19,6 +20,14 @@ function refresh() {
       aiStatus.classList.remove('ok');
     }
   });
+  chrome.runtime.sendMessage({ type: 'athena_vault_status' }, (r) => {
+    if (r && r.ok) {
+      vaultStatus.textContent = r.exists
+        ? (r.locked ? 'Cofre: 🔒 bloqueado' : 'Cofre: 🔓 desbloqueado')
+        : 'Cofre: não configurado (senha-mestre)';
+      vaultStatus.classList.toggle('ok', r.exists && !r.locked);
+    }
+  });
 }
 
 document.getElementById('reconnect').addEventListener('click', () => {
@@ -27,6 +36,10 @@ document.getElementById('reconnect').addEventListener('click', () => {
 
 document.getElementById('settings').addEventListener('click', () => {
   chrome.runtime.openOptionsPage();
+});
+
+document.getElementById('schedule').addEventListener('click', () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('schedule.html') });
 });
 
 refresh();
