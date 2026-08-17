@@ -69,12 +69,13 @@ section{scroll-margin-top:calc(var(--header-h) + 8px)}
 /* ---------- hero ---------- */
 .hero{position:relative;min-height:calc(100svh - var(--header-h));padding:calc(var(--header-h) + 48px) 0 72px;overflow:hidden}
 .aurora{
-  position:absolute;inset:0;pointer-events:none;
+  position:absolute;inset:0;pointer-events:none;will-change:transform;
   background:
     radial-gradient(700px 420px at 15% 8%,rgba(109,93,246,.22),transparent 70%),
     radial-gradient(700px 420px at 85% 30%,rgba(34,211,238,.16),transparent 70%),
     radial-gradient(500px 300px at 60% 90%,rgba(109,93,246,.08),transparent 70%);
 }
+.hero-visual{will-change:transform}
 .hero-grid{position:relative;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center}
 .hero-copy{max-width:520px}
 .eyebrow{font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--c2);text-transform:uppercase;margin-bottom:16px}
@@ -202,9 +203,24 @@ kbd{font-family:inherit;font-size:12px;background:var(--surface-2);border:1px so
 .footer-links a:hover{color:var(--text)}
 .copy{font-size:12px!important;color:var(--muted-2)!important}
 
-/* ---------- reveals ---------- */
-.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s cubic-bezier(.2,.8,.3,1)}
+/* ---------- reveals (o Motion assume a animação; .visible = fallback) ---------- */
+.reveal{opacity:0;transform:translateY(26px)}
 .reveal.visible{opacity:1;transform:none}
+
+/* ---------- barra de progresso de scroll (Motion) ---------- */
+.progress{
+  position:fixed;top:0;left:0;width:100%;height:3px;z-index:60;
+  background:var(--grad);transform-origin:left;transform:scaleX(0);
+  pointer-events:none;
+}
+
+/* ---------- reduced motion ---------- */
+@media (prefers-reduced-motion:reduce){
+  .reveal{opacity:1;transform:none}
+  .athena-panel{animation:none}
+  .fab{animation:none}
+  .progress{display:none}
+}
 
 /* ---------- responsivo ---------- */
 @media (max-width:960px){
