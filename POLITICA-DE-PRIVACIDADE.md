@@ -73,6 +73,10 @@ do usuário ou do agente que ele mesmo configurou.
 - O servidor ponte opcional escuta apenas em `localhost` — o usuário deve evitar
   expô-lo publicamente.
 - Não há código remoto: todo o código da extensão é estático (Manifest V3).
+- **Companion nativo (opcional):** quando instalado, armazena **apenas** timestamps
+  de tarefas agendadas (`{id, nome, hora}`) em `%LOCALAPPDATA%\AthenaWake` e abre o
+  Chrome na hora devida. **Nenhuma credencial, conteúdo de página ou chave de API
+  é enviado ao companion.**
 
 ## 7. Alterações nesta política
 

@@ -65,6 +65,7 @@ athena, ai, browser automation, controle de navegador, automação, agente, mcp,
 | `storage` | Salvar a chave de API, tarefas agendadas e credenciais criptografadas localmente |
 | `alarms` / `tabGroups` | Agendar tarefas (heartbeat) e organizar as abas criadas pela IA |
 | `notifications` | Avisar o usuário sobre o resultado das tarefas agendadas |
+| `nativeMessaging` | Comunicar-se com o companion nativo opcional (Windows) que abre o Chrome na hora de tarefas agendadas — envia apenas timestamps, nenhum dado pessoal |
 
 ## 🔒 Declaração de privacidade (para colar)
 

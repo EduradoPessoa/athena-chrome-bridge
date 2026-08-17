@@ -208,6 +208,7 @@ athena-chrome-bridge/
 │   ├── schedule.html/.js # Agendamentos: tarefas, cofre e memória
 │   └── icons/            # Ícones da extensão (16/32/48/128)
 ├── test/                 # Testes node:test (scheduler + vault)
+├── native/               # Companion nativo (Camada 2): host Node, instalador e testes
 ├── scripts/              # Geração de ícones e empacotamento para a loja
 ├── docs/plans/           # Planos de implementação
 ├── POLITICA-DE-PRIVACIDADE.md
@@ -267,9 +268,35 @@ confere `nextRun <= now` para cada tarefa habilitada — o agendamento é por re
 > do Chrome: `chrome://settings/system` → *"Continuar executando aplicativos em
 > segundo plano quando o Google Chrome for fechado"* — o processo fica na bandeja e
 > as tarefas continuam sendo executadas (há um atalho para essa configuração na
-> tela de **⏰ Agendamentos**). Se uma tarefa usar `login` com o cofre bloqueado,
-> ela é marcada como *ignorada* até você desbloqueá-lo. Senhas nunca são enviadas à
-> IA nem registradas em logs.
+> tela de **⏰ Agendamentos**). Para rodar **mesmo com o Chrome totalmente fechado**,
+> instale o **companion nativo** (seção abaixo). Se uma tarefa usar `login` com o
+> cofre bloqueado, ela é marcada como *ignorada* até você desbloqueá-lo. Senhas
+> nunca são enviadas à IA nem registradas em logs.
+
+## 🔌 Companion nativo — agendar com o Chrome fechado (Camada 2)
+
+O **companion** é um host nativo (Node.js, Windows) que roda em segundo plano,
+guarda uma cópia da agenda (`%LOCALAPPDATA%\AthenaWake\schedule.json`) e **abre o
+Chrome na hora devida** — a extensão então executa a tarefa normalmente (com
+catch-up das que venceram enquanto o Chrome estava fechado).
+
+**Instalação:**
+
+```powershell
+# 1) Copie o ID da extensão em chrome://extensions
+# 2) No PowerShell, na pasta do repositório:
+powershell -ExecutionPolicy Bypass -File native/install.ps1 -ExtensionId <ID>
+# 3) Recarregue a extensão → Agendamentos mostra "Companion: instalado e conectado"
+```
+
+**Como funciona:** a extensão sincroniza a agenda com o host via **native messaging**
+a cada mudança de tarefa; o daemon (iniciado no logon, janela oculta) acorda no
+vencimento mais próximo e abre o Chrome. Desinstalar: `native/uninstall.ps1`.
+
+**Segurança:** o host **nunca** vê credenciais — apenas `{id, nome, timestamp}` e o
+caminho do Chrome; os dados ficam no perfil do usuário e o host valida que o
+processo pai é `chrome.exe`. Requer Node.js 22 (ou empacotar `athena-wake.js` em um
+exe único com `nexe` para distribuição sem runtime).
 
 ## 🛡️ Segurança e privacidade
 
@@ -295,6 +322,7 @@ Consulte também a [Política de Privacidade](POLITICA-DE-PRIVACIDADE.md) comple
 | `storage` | Guardar localmente chave de API, tarefas agendadas, memória e credenciais **criptografadas** |
 | `alarms` · `tabGroups` | Agendar tarefas (heartbeat de 30s) e organizar as abas criadas pela IA |
 | `notifications` | Avisar o resultado das tarefas agendadas (concluída/ignorada/falhou) |
+| `nativeMessaging` | Sincronizar a agenda com o **companion nativo** (opcional) para executar tarefas com o Chrome fechado |
 
 ### O que a extensão **NÃO** faz
 
