@@ -55,6 +55,22 @@ athena, ai, browser automation, controle de navegador, automação, agente, mcp,
 3. Popup da extensão (status conectado + botões Reconectar/Configurações);
 4. Página de Configurações (chave de API, URL e modelo).
 
+## 🎯 Single purpose (campo obrigatório do dashboard)
+
+> **Permitir que o usuário controle o navegador Chrome com uma IA de sua escolha
+> (OpenAI-compatible, como a DeepSeek): digite um comando em linguagem natural e a
+> extensão navega, lê, clica, preenche e automatiza tarefas no navegador —
+> inclusive de forma agendada.**
+
+*(Versão curta: "Controle do navegador Chrome por IA via comandos em linguagem
+natural — navegar, ler, clicar, preencher e automatizar tarefas, inclusive
+agendadas.")*
+
+*(English: "Let the user control the Chrome browser with an AI of their choice
+(OpenAI-compatible, e.g. DeepSeek): type a natural-language command and the
+extension navigates, reads, clicks, fills and automates tasks in the browser —
+including on a schedule.")*
+
 ## 📋 Permissões e justificativas (aba Privacy do dashboard)
 
 | Permissão | Justificativa |
