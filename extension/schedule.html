@@ -67,6 +67,8 @@
   .bg-banner .hint{font-size:12px;color:#aab2c9;margin:6px 0 0}
   .bg-banner ol{padding-left:18px;margin:4px 0 10px}
   .bg-banner code{font-family:ui-monospace,Consolas,monospace;color:#22d3ee}
+  .companion-row{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+  pre.hint{background:#151a2b;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:8px 10px;color:#22d3ee;font-size:12px;margin-top:4px}
   .empty{color:#5d647c;font-size:13px;padding:12px 2px}
   .switch{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:#aab2c9;cursor:pointer}
   input[type=checkbox]{width:auto}
@@ -95,6 +97,18 @@
     <button class="tab" data-tab="creds">🔐 Credenciais</button>
     <button class="tab" data-tab="memory">🧠 Memória</button>
   </nav>
+
+  <div class="companion-row" id="companionRow">
+    <span id="companionStatus" class="chip warn">🔌 Companion: verificando…</span>
+    <button class="btn ghost small" id="companionHelp" type="button">Como instalar</button>
+  </div>
+  <div class="editor" id="companionHelpBox" hidden>
+    <h2>🔌 Instalar o companion (agendar com o Chrome fechado)</h2>
+    <p class="hint">1. Copie o <b>ID da extensão</b> em <code>chrome://extensions</code> (ex.: <code>abcdefghijklmnop</code>)</p>
+    <p class="hint">2. No PowerShell (na pasta do repositório), rode:</p>
+    <pre class="hint">powershell -ExecutionPolicy Bypass -File native/install.ps1 -ExtensionId &lt;ID&gt;</pre>
+    <p class="hint">3. Recarregue a extensão. Requer Node.js 22 instalado. O companion abre o Chrome na hora das tarefas — sem ele, as tarefas só rodam com o Chrome aberto.</p>
+  </div>
 
   <!-- ============ TAREFAS ============ -->
   <section id="tab-tasks" class="tab-pane active">

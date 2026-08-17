@@ -28,6 +28,35 @@ if (openBgSettings) {
   });
 }
 
+// companion nativo (Camada 2: agendar com Chrome fechado)
+async function refreshCompanion() {
+  const el = $('companionStatus');
+  if (!el) return;
+  try {
+    const r = await send({ type: 'athena_companion_status' });
+    if (r && r.ok && r.connected) {
+      el.textContent = '🔌 Companion: instalado e conectado';
+      el.className = 'chip ok';
+    } else if (r && r.ok) {
+      el.textContent = '🔌 Companion: não conectado';
+      el.className = 'chip warn';
+    } else {
+      el.textContent = '🔌 Companion: não instalado';
+      el.className = 'chip warn';
+    }
+  } catch (e) {
+    el.textContent = '🔌 Companion: não instalado';
+    el.className = 'chip warn';
+  }
+}
+const companionHelp = $('companionHelp');
+if (companionHelp) {
+  companionHelp.addEventListener('click', () => {
+    const box = $('companionHelpBox');
+    if (box) box.hidden = !box.hidden;
+  });
+}
+
 /* ---------------- cofre ---------------- */
 async function refreshVault() {
   const r = await send({ type: 'athena_vault_status' });
@@ -343,3 +372,4 @@ refreshCreds();
 refreshMemory();
 refreshTasks();
 refreshHistory();
+refreshCompanion();
