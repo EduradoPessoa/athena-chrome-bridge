@@ -211,6 +211,10 @@ athena-chrome-bridge/
 ├── native/               # Companion nativo (Camada 2): host Node, instalador e testes
 ├── scripts/              # Geração de ícones e empacotamento para a loja
 ├── docs/plans/           # Planos de implementação
+├── landing/              # Landing page publicada no GitHub Pages
+│   ├── index.html        # Página inicial
+│   ├── styles.css        # Estilos da landing
+│   └── privacidade.html  # Política de privacidade (URL oficial da loja)
 ├── POLITICA-DE-PRIVACIDADE.md
 ├── CHROME-WEB-STORE.md
 └── server/               # Servidor ponte
@@ -302,7 +306,9 @@ exe único com `nexe` para distribuição sem runtime).
 
 A extensão foi projetada com **privacidade por padrão**: sem telemetria, sem coleta
 em segundo plano e sem comunicação com servidores de terceiros sem uma ação sua.
-Consulte também a [Política de Privacidade](POLITICA-DE-PRIVACIDADE.md) completa.
+Consulte também a [Política de Privacidade](https://eduradopessoa.github.io/athena-chrome-bridge/privacidade.html)
+completa (versão em HTML publicada no GitHub Pages; o [Markdown de origem](POLITICA-DE-PRIVACIDADE.md)
+fica no repositório).
 
 ### Como os dados fluem
 
