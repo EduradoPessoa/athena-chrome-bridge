@@ -1,6 +1,6 @@
 # Política de Privacidade — Athena Chrome Bridge
 
-**Última atualização:** 17 de agosto de 2026
+**Última atualização:** 18 de agosto de 2026
 
 Esta política descreve como a extensão **Athena Chrome Bridge** ("extensão") coleta,
 usa e armazena informações. A extensão foi projetada para ser **privada por padrão**:
@@ -36,12 +36,25 @@ localização ou qualquer dado em segundo plano.
 
 ## 3. Permissões solicitadas
 
+A extensão solicita o **conjunto mínimo** de permissões necessário ao seu propósito
+(controle do navegador por IA, inclusive de forma agendada). A tabela abaixo reflete
+exatamente o `manifest.json` (Manifest V3):
+
 | Permissão | Motivo |
 |---|---|
-| `host_permissions: <all_urls>` | Injetar o botão flutuante e ler/controlar a página **que o usuário está visitando** sob demanda |
-| `tabs`, `activeTab`, `scripting` | Listar/ativar abas e executar comandos na página ativa solicitados pelo usuário |
-| `storage` | Guardar a chave de API e o status de conexão localmente |
-| `alarms`, `tabGroups` | Manter a conexão WebSocket viva e organizar as abas criadas pela IA |
+| `host_permissions: <all_urls>` | Necessária ao propósito: o botão flutuante e os comandos da IA operam na página **que o usuário está visitando**, em qualquer site. Além disso, o provedor de IA é **configurável pelo usuário** (qualquer URL OpenAI-compatible — DeepSeek, GPT, Groq, Ollama local), então o acesso de host não pode ser restrito a um único domínio. Cobre também a chamada ao provedor de IA e o screenshot da aba ativa |
+| `scripting` | Executa o `content.js` sob demanda (atalho `Alt+Shift+A` e injeção defensiva antes de cada comando) |
+| `storage` | Persiste localmente: chave de API, tarefas agendadas, memória e credenciais **criptografadas** (cofre AES-GCM) |
+| `alarms` | Heartbeat do agendador (mín. 30s) e keep-alive da conexão WebSocket |
+| `tabGroups` | Organiza em um grupo visual "🦉 Athena" as abas abertas/criadas pela IA |
+| `notifications` | Avisa o usuário sobre o resultado das tarefas agendadas |
+| `nativeMessaging` | Comunicação com o **companion nativo opcional** (Windows) que abre o Chrome na hora de tarefas agendadas — envia apenas timestamps, nenhum dado pessoal |
+
+Além disso, o content script injeta o botão flutuante da IA em todas as páginas
+(`content_scripts.matches: <all_urls>`), o que gera o aviso "Pode ler e alterar todos
+os seus dados em todos os sites" na Chrome Web Store. Esse acesso existe para que o
+usuário possa acionar a IA em **qualquer site** que esteja visitando; a leitura e a
+alteração de conteúdo só ocorrem **sob demanda**, quando o usuário digita um comando.
 
 Nenhuma permissão é usada para monitoramento: tudo é acionado por uma ação explícita
 do usuário ou do agente que ele mesmo configurou.

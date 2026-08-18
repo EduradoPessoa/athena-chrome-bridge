@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Política de Privacidade — Athena Chrome Bridge</title>
+<meta name="description" content="Política de privacidade da extensão Athena Chrome Bridge: como a extensão coleta, usa e armazena informações.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .policy{max-width:840px;margin:0 auto;padding:calc(var(--header-h) + 40px) 24px 72px}
+  .policy h1{font-size:clamp(30px,4.4vw,44px);font-weight:900;letter-spacing:-.03em;line-height:1.1;margin:0 0 6px}
+  .policy .updated{color:var(--muted);font-size:14px;margin-bottom:30px}
+  .policy h2{font-size:20px;font-weight:800;margin:42px 0 14px;padding-top:14px;border-top:1px solid var(--border)}
+  .policy h2:first-of-type{border-top:none;padding-top:0;margin-top:0}
+  .policy p,.policy li{color:var(--text);font-size:15px}
+  .policy p{margin-bottom:12px}
+  .policy ul{margin:4px 0 12px 20px;display:flex;flex-direction:column;gap:8px}
+  .policy table{width:100%;border-collapse:collapse;margin:16px 0 20px;font-size:14px}
+  .policy th,.policy td{text-align:left;padding:12px 14px;border:1px solid var(--border);vertical-align:top}
+  .policy th{background:var(--surface-2);color:var(--c2);font-weight:700}
+  .policy td:first-child{font-weight:600;white-space:nowrap}
+  .policy code{font-family:ui-monospace,Consolas,'Cascadia Mono',monospace;font-size:13px;color:var(--c2);background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.2);border-radius:6px;padding:1px 6px}
+  .policy strong{color:var(--text)}
+  .policy a{color:var(--c2);text-decoration:underline;text-underline-offset:3px}
+  .back{display:inline-flex;align-items:center;gap:8px;color:var(--muted);font-size:14px;margin-bottom:26px;transition:color .15s}
+  .back:hover{color:var(--text)}
+  .policy-foot{border-top:1px solid var(--border);margin-top:56px;padding-top:22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+  .policy-foot .brand{font-size:15px}
+  .policy-foot p{color:var(--muted);font-size:13px;margin:0}
+  @media (max-width:640px){
+    .policy table{font-size:13px}
+    .policy th,.policy td{padding:10px}
+  }
+</style>
+</head>
+<body>
+
+<div class="policy">
+  <a class="back" href="index.html">← Voltar à página inicial</a>
+  <h1>Política de Privacidade</h1>
+  <p class="updated">Athena Chrome Bridge — <strong>Última atualização:</strong> 18 de agosto de 2026</p>
+
+  <p>Esta política descreve como a extensão <strong>Athena Chrome Bridge</strong> (&ldquo;extensão&rdquo;) coleta, usa e armazena informações. A extensão foi projetada para ser <strong>privada por padrão</strong>: ela não coleta dados em segundo plano, não tem telemetria e não se comunica com servidores de terceiros sem a ação explícita do usuário.</p>
+
+  <h2>1. O que a extensão faz</h2>
+  <p>A extensão permite que o usuário:</p>
+  <ul>
+    <li>acione um <strong>botão flutuante</strong> em qualquer página e digite comandos em linguagem natural para uma IA (provedor OpenAI-compatible configurado pelo usuário);</li>
+    <li>leia e interaja com a página ativa (navegar, clicar, preencher formulários, ler texto, executar JavaScript) <strong>somente após o usuário solicitar</strong>;</li>
+    <li>conecte-se, opcionalmente, a um servidor ponte local (<code>localhost</code>) para que agentes de IA externos controlem o navegador.</li>
+  </ul>
+
+  <h2>2. Dados coletados e processados</h2>
+  <table>
+    <thead>
+      <tr><th>Dado</th><th>Quando</th><th>Onde fica / para onde vai</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Prompt do usuário</strong></td>
+        <td>Quando o usuário digita um comando na linha de comando</td>
+        <td>Enviado diretamente da extensão para o <strong>provedor de IA</strong> configurado (ex.: DeepSeek), via HTTPS</td>
+      </tr>
+      <tr>
+        <td><strong>Conteúdo da página</strong> (título, texto, HTML)</td>
+        <td>Somente quando o comando do usuário exige (ex.: &ldquo;leia a página&rdquo;) e a IA decide usar a ferramenta correspondente</td>
+        <td>Enviado ao provedor de IA na mesma conversa</td>
+      </tr>
+      <tr>
+        <td><strong>Chave de API</strong></td>
+        <td>Armazenada quando o usuário salva nas Configurações</td>
+        <td><strong>Apenas no <code>chrome.storage.local</code></strong> do navegador; enviada somente ao provedor de IA para autenticar a requisição do usuário</td>
+      </tr>
+      <tr>
+        <td><strong>Credenciais de sites</strong> (usuário/senha de perfis de login)</td>
+        <td>Quando o usuário cria perfis de login em <strong>Agendamentos</strong></td>
+        <td><strong>Criptografadas (AES-GCM 256)</strong> com chave derivada de uma senha-mestre (PBKDF2) que <strong>nunca é armazenada</strong> — a chave fica só em memória e o cofre bloqueia ao reiniciar o Chrome. Usadas exclusivamente para preencher formulários de login em passos determinísticos; <strong>nunca</strong> são enviadas à IA nem registradas em logs</td>
+      </tr>
+      <tr>
+        <td><strong>Comandos estruturados</strong> (navegar, clicar etc.)</td>
+        <td>Quando um agente externo usa o servidor ponte local</td>
+        <td>Trafegam apenas entre o servidor local (<code>localhost:3001/9222</code>) e a extensão; não saem da máquina</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p><strong>A extensão NÃO coleta, em nenhuma circunstância:</strong> histórico de navegação, dados de formulários fora do que o usuário pedir, cookies, identificadores de rastreamento, localização ou qualquer dado em segundo plano.</p>
+
+  <h2>3. Permissões solicitadas</h2>
+  <p>A extensão solicita o <strong>conjunto mínimo</strong> de permissões necessário ao seu propósito (controle do navegador por IA, inclusive de forma agendada). A tabela abaixo reflete exatamente o <code>manifest.json</code> (Manifest V3):</p>
+  <table>
+    <thead>
+      <tr><th>Permissão</th><th>Motivo</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>host_permissions: &lt;all_urls&gt;</code></td>
+        <td>Necessária ao propósito: o botão flutuante e os comandos da IA operam na página <strong>que o usuário está visitando</strong>, em qualquer site. Além disso, o provedor de IA é <strong>configurável pelo usuário</strong> (qualquer URL OpenAI-compatible — DeepSeek, GPT, Groq, Ollama local), então o acesso de host não pode ser restrito a um único domínio. Cobre também a chamada ao provedor de IA e o screenshot da aba ativa</td>
+      </tr>
+      <tr>
+        <td><code>scripting</code></td>
+        <td>Executa o <code>content.js</code> sob demanda (atalho <code>Alt+Shift+A</code> e injeção defensiva antes de cada comando)</td>
+      </tr>
+      <tr>
+        <td><code>storage</code></td>
+        <td>Persiste localmente: chave de API, tarefas agendadas, memória e credenciais <strong>criptografadas</strong> (cofre AES-GCM)</td>
+      </tr>
+      <tr>
+        <td><code>alarms</code></td>
+        <td>Heartbeat do agendador (mín. 30s) e keep-alive da conexão WebSocket</td>
+      </tr>
+      <tr>
+        <td><code>tabGroups</code></td>
+        <td>Organiza em um grupo visual &ldquo;🦉 Athena&rdquo; as abas abertas/criadas pela IA</td>
+      </tr>
+      <tr>
+        <td><code>notifications</code></td>
+        <td>Avisa o usuário sobre o resultado das tarefas agendadas</td>
+      </tr>
+      <tr>
+        <td><code>nativeMessaging</code></td>
+        <td>Comunicação com o <strong>companion nativo opcional</strong> (Windows) que abre o Chrome na hora de tarefas agendadas — envia apenas timestamps, nenhum dado pessoal</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>Além disso, o content script injeta o botão flutuante da IA em todas as páginas (<code>content_scripts.matches: &lt;all_urls&gt;</code>), o que gera o aviso &ldquo;Pode ler e alterar todos os seus dados em todos os sites&rdquo; na Chrome Web Store. Esse acesso existe para que o usuário possa acionar a IA em <strong>qualquer site</strong> que esteja visitando; a leitura e a alteração de conteúdo só ocorrem <strong>sob demanda</strong>, quando o usuário digita um comando.</p>
+
+  <p>Nenhuma permissão é usada para monitoramento: tudo é acionado por uma ação explícita do usuário ou do agente que ele mesmo configurou.</p>
+
+  <h2>4. Compartilhamento com terceiros</h2>
+  <ul>
+    <li><strong>Provedor de IA:</strong> o prompt e o contexto da página são enviados ao provedor escolhido pelo usuário (configurável), apenas no momento do comando. A política de dados do provedor se aplica a essas requisições.</li>
+    <li><strong>Nenhuma outra entidade</strong> recebe dados da extensão. Não há anúncios, analytics, venda ou transferência de dados pessoais.</li>
+  </ul>
+
+  <h2>5. Armazenamento e retenção</h2>
+  <ul>
+    <li>A chave de API permanece no <code>chrome.storage.local</code> até o usuário removê-la (botão <strong>Limpar</strong> nas Configurações).</li>
+    <li>Credenciais de sites (Agendamentos) ficam <strong>criptografadas</strong> no <code>chrome.storage.local</code>; a senha-mestre do cofre nunca é armazenada e o cofre bloqueia ao reiniciar o navegador. Em caso de perda da senha-mestre, não há recuperação — o usuário pode resetar o cofre (removendo as credenciais).</li>
+    <li>O histórico de conversa do painel flutuante é <strong>volátil</strong> (mantido apenas em memória na página aberta) e desaparece ao fechar/atualizar a aba.</li>
+    <li>A extensão não mantém servidores próprios e não armazena dados do usuário em nenhum lugar fora do navegador.</li>
+  </ul>
+
+  <h2>6. Segurança</h2>
+  <ul>
+    <li>As chamadas à IA usam HTTPS e autenticação por <code>Bearer</code> com a chave do usuário.</li>
+    <li>O servidor ponte opcional escuta apenas em <code>localhost</code> — o usuário deve evitar expô-lo publicamente.</li>
+    <li>Não há código remoto: todo o código da extensão é estático (Manifest V3).</li>
+    <li><strong>Companion nativo (opcional):</strong> quando instalado, armazena <strong>apenas</strong> timestamps de tarefas agendadas (<code>{id, nome, hora}</code>) em <code>%LOCALAPPDATA%\AthenaWake</code> e abre o Chrome na hora devida. <strong>Nenhuma credencial, conteúdo de página ou chave de API é enviado ao companion.</strong></li>
+  </ul>
+
+  <h2>7. Alterações nesta política</h2>
+  <p>Alterações materiais serão refletidas nesta página, com nova data de atualização. O uso continuado da extensão após alterações implica aceitação da política vigente.</p>
+
+  <h2>8. Contato</h2>
+  <p>Dúvidas sobre esta política ou sobre o tratamento de dados: <strong>eduardo@phoenyx.com.br</strong> (ou abra uma <em>issue</em> no repositório público do projeto).</p>
+
+  <div class="policy-foot">
+    <div class="brand"><span class="brand-mark">🦉</span><span class="brand-name">Athena <b>Chrome Bridge</b></span></div>
+    <p>© 2026 Phoenyx Tecnologia.</p>
+  </div>
+</div>
+
+</body>
+</html>

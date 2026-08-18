@@ -99,10 +99,14 @@ including on a schedule.")*
 
 ## 🌐 URL da política de privacidade
 
-Hospede a [`POLITICA-DE-PRIVACIDADE.md`](POLITICA-DE-PRIVACIDADE.md) e use uma URL pública:
+A política em HTML já está no repo em `landing/privacidade.html` e é publicada
+automaticamente pelo workflow `pages.yml` (Settings → Pages → Source: **GitHub Actions**):
 
-- **Opção rápida (raw do GitHub):** `https://raw.githubusercontent.com/EduradoPessoa/athena-chrome-bridge/main/POLITICA-DE-PRIVACIDADE.md`
-- **Opção estável (GitHub Pages):** publicar o repo em `https://EduradoPessoa.github.io/athena-chrome-bridge/POLITICA-DE-PRIVACIDADE.md` (Settings → Pages → branch `main`, pasta raiz)
+- **URL oficial (página HTML renderizada):** `https://EduradoPessoa.github.io/athena-chrome-bridge/privacidade.html`
+- **Fallback (raw do GitHub, texto puro):** `https://raw.githubusercontent.com/EduradoPessoa/athena-chrome-bridge/main/POLITICA-DE-PRIVACIDADE.md`
+
+> ⚠️ Qualquer alteração na `POLITICA-DE-PRIVACIDADE.md` deve ser replicada em
+> `landing/privacidade.html` antes do push (a Loja usa a URL do HTML).
 
 ## ✅ Checklist antes do envio
 
